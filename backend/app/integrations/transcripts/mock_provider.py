@@ -178,3 +178,4 @@ class MockTranscriptProvider(TranscriptProvider):
                 )
             ]
         )
+

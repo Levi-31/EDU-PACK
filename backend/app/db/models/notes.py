@@ -20,3 +20,4 @@ class VideoNotes(Base, TimestampMixin):
     review_findings_json = Column(JSON, nullable=True)
 
     job = relationship("PlaylistJob", back_populates="notes")
+

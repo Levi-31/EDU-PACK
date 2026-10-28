@@ -180,3 +180,4 @@ class PDFService:
         except Exception as e:
             logger.error(f"Error compiling PDF: {e}", exc_info=True)
             raise PDFGenerationException(f"PDF compilation failed: {str(e)}")
+

@@ -57,3 +57,4 @@ class TechnicalNotesAgent:
                 section.timestamped_watch_url = construct_video_url(video_id)
 
         return notes
+

@@ -92,3 +92,4 @@ def cancel_job(
         return service.cancel_job(job_id)
     except PlaylistScholarException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
+

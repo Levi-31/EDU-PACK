@@ -34,3 +34,4 @@ class BaseRepository(Generic[ModelType]):
             self.db.commit()
             return True
         return False
+

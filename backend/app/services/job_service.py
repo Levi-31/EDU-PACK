@@ -190,3 +190,4 @@ class JobService:
             raise JobNotFoundException(job_id)
         self.job_repo.update_status(job_id, JobStatus.CANCELLED, stage="CANCELLED")
         return self.get_job_detail(job_id)
+

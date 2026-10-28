@@ -22,3 +22,4 @@ async def preview_playlist(
         raise HTTPException(status_code=e.status_code, detail=e.message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to preview playlist: {str(e)}")
+

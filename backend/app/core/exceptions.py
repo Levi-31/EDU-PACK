@@ -40,3 +40,4 @@ class PDFGenerationException(PlaylistScholarException):
 class StorageException(PlaylistScholarException):
     def __init__(self, message: str = "Storage operation failed", details: dict = None):
         super().__init__(message, status_code=500, details=details)
+

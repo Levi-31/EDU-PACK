@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     container_name: playlist_scholar_backend
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/playlist_scholar
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/playlist_scholar
       REDIS_URL: redis://redis:6379/0
       JOB_RUNNER: celery
       DEMO_MODE: ${DEMO_MODE:-true}
@@ -65,7 +65,7 @@ services:
       dockerfile: Dockerfile
     container_name: playlist_scholar_worker
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/playlist_scholar
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/playlist_scholar
       REDIS_URL: redis://redis:6379/0
       JOB_RUNNER: celery
       DEMO_MODE: ${DEMO_MODE:-true}
@@ -97,3 +97,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+

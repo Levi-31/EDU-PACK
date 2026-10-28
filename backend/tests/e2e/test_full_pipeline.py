@@ -63,3 +63,4 @@ async def test_full_end_to_end_pipeline():
     assert download_resp.status_code == 200
     assert download_resp.headers["content-type"] == "application/pdf"
     assert len(download_resp.content) > 1000
+

@@ -52,3 +52,4 @@ class TranscriptRepository(BaseRepository[Transcript]):
                 error_message=error_message
             )
             return self.create(obj)
+

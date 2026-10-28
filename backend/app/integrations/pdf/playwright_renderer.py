@@ -48,3 +48,4 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
         except Exception as e:
             logger.error(f"Playwright PDF rendering failed: {e}")
             raise PDFGenerationException(f"Playwright PDF compilation failed: {str(e)}")
+

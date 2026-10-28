@@ -90,3 +90,4 @@ class UserUploadTranscriptProvider:
             status=TranscriptStatus.USER_PROVIDED,
             segments=segments
         )
+

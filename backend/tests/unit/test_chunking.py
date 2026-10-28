@@ -61,3 +61,4 @@ def test_transcript_quality_evaluation():
     )
     is_valid, msg = agent.evaluate_quality(data_valid)
     assert is_valid
+

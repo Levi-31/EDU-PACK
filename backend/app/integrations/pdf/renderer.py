@@ -8,3 +8,4 @@ class PDFRendererInterface(ABC):
         Renders an HTML document to PDF bytes preserving print CSS and clickable hyperlinks.
         """
         pass
+

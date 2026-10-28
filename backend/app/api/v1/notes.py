@@ -27,3 +27,4 @@ def get_video_notes(
     if not notes:
         raise HTTPException(status_code=404, detail=f"Notes not found for video {video_id} in job {job_id}")
     return notes
+

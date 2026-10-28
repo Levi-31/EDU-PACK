@@ -40,3 +40,4 @@ class GenerationOptions(BaseModel):
     enable_visuals: bool = True
     pdf_theme: PDFTheme = PDFTheme.EDITORIAL_NAVY
     max_revisions: int = 1
+

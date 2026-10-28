@@ -16,3 +16,4 @@ class ArtifactSchema(BaseModel):
     created_at: datetime
     download_url: str
     is_valid: bool = True
+

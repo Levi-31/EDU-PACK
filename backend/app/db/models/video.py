@@ -28,3 +28,4 @@ class PlaylistVideo(Base, TimestampMixin):
     processed_at = Column(DateTime, nullable=True)
 
     job = relationship("PlaylistJob", back_populates="videos")
+

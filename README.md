@@ -171,3 +171,4 @@ PYTHONPATH=backend .venv/bin/pytest backend/tests -v
 ## 8. License
 
 MIT License. Designed with care for high-impact technical learning.
+

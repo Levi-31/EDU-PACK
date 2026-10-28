@@ -126,3 +126,4 @@ export const JobHistory: React.FC<JobHistoryProps> = ({
     </div>
   );
 };
+

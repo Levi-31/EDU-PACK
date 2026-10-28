@@ -59,3 +59,4 @@ class PlaylistVideoRepository(BaseRepository[PlaylistVideo]):
             v.retry_count += 1
         self.db.commit()
         return failed_videos
+

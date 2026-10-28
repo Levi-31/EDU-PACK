@@ -57,3 +57,4 @@ class NotesRepository(BaseRepository[VideoNotes]):
                 review_findings_json=review_findings_json
             )
             return self.create(obj)
+

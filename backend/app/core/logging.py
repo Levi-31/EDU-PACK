@@ -26,3 +26,4 @@ def get_logger(name: str, job_id: Optional[str] = None, video_id: Optional[str] 
         "video_id": video_id or "-"
     }
     return logging.LoggerAdapter(logger, extra)
+

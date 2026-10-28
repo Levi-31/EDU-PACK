@@ -47,3 +47,4 @@ class NotesReviewAgent:
                 findings=[f"Default approval after review pass: {str(e)}"],
                 revisions_applied=current_revision_count
             ), False
+

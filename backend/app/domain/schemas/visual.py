@@ -16,3 +16,4 @@ class VisualAssetSchema(BaseModel):
     storage_key: Optional[str] = None
     is_generated: bool = False
     decision_reason: Optional[str] = Field(default=None, description="Why this visual was or was not justified")
+

@@ -19,3 +19,4 @@ class JobEvent(Base):
     data = Column(JSON, nullable=True)
 
     job = relationship("PlaylistJob", back_populates="events")
+

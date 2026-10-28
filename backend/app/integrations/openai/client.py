@@ -175,3 +175,4 @@ class OfficialOpenAIClient(OpenAIClientInterface):
         except Exception as e:
             logger.warning(f"Image generation failed: {e}")
             return None
+

@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Any
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 from app.domain.enums import TranscriptStatus
 from app.domain.schemas.transcript import TranscriptData, TranscriptSegment
@@ -11,11 +11,20 @@ logger = logging.getLogger(__name__)
 class YouTubeTranscriptProvider(TranscriptProvider):
     async def get_transcript(self, video_id: str, language: str = "en") -> TranscriptData:
         try:
-            # Check available transcript list
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            api = YouTubeTranscriptApi()
             
-            # 1. Try to find preferred manually created transcript
+            # Compatible with both youtube-transcript-api 1.x (instance method) and legacy 0.6.x (class method)
+            if hasattr(api, "list"):
+                transcript_list = api.list(video_id)
+            elif hasattr(YouTubeTranscriptApi, "list_transcripts"):
+                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            else:
+                transcript_list = YouTubeTranscriptApi.list(video_id)
+
             transcript = None
+            source_label = "captions"
+
+            # 1. Try manually created transcript in requested language or english
             try:
                 transcript = transcript_list.find_manually_created_transcript([language, "en"])
                 source_label = "manual_captions"
@@ -30,12 +39,20 @@ class YouTubeTranscriptProvider(TranscriptProvider):
                 except Exception:
                     pass
 
-            # 3. Fallback to any available transcript and translate if needed
+            # 3. Try find_transcript
+            if not transcript and hasattr(transcript_list, "find_transcript"):
+                try:
+                    transcript = transcript_list.find_transcript([language, "en"])
+                    source_label = "captions"
+                except Exception:
+                    pass
+
+            # 4. Fallback: Take the first available transcript
             if not transcript:
                 try:
                     for t in transcript_list:
                         transcript = t
-                        source_label = f"fallback_{t.language_code}"
+                        source_label = f"captions_{getattr(t, 'language_code', 'unknown')}"
                         break
                 except Exception:
                     pass
@@ -49,18 +66,26 @@ class YouTubeTranscriptProvider(TranscriptProvider):
                     error_message=f"No accessible transcript found for video {video_id} in requested language '{language}'."
                 )
 
-            # Fetch actual raw snippet list
             raw_snippets = transcript.fetch()
             segments: List[TranscriptSegment] = []
 
             for idx, item in enumerate(raw_snippets):
-                start = float(item.get("start", 0.0))
-                duration = float(item.get("duration", 0.0))
-                end = round(start + duration, 2)
-                text = item.get("text", "").strip()
+                # Support both FetchedTranscriptSnippet object and legacy dict
+                if hasattr(item, "text"):
+                    text = str(getattr(item, "text", "")).strip()
+                    start = float(getattr(item, "start", 0.0))
+                    duration = float(getattr(item, "duration", 0.0))
+                elif isinstance(item, dict):
+                    text = str(item.get("text", "")).strip()
+                    start = float(item.get("start", 0.0))
+                    duration = float(item.get("duration", 0.0))
+                else:
+                    continue
+
                 if not text:
                     continue
 
+                end = round(start + duration, 2)
                 segments.append(
                     TranscriptSegment(
                         id=f"seg_{idx + 1:04d}",
@@ -73,7 +98,7 @@ class YouTubeTranscriptProvider(TranscriptProvider):
             if not segments:
                 return TranscriptData(
                     video_id=video_id,
-                    language=transcript.language_code,
+                    language=getattr(transcript, "language_code", language),
                     source=source_label,
                     status=TranscriptStatus.UNAVAILABLE,
                     error_message="Transcript segments list was empty."
@@ -81,7 +106,7 @@ class YouTubeTranscriptProvider(TranscriptProvider):
 
             return TranscriptData(
                 video_id=video_id,
-                language=transcript.language_code,
+                language=getattr(transcript, "language_code", language),
                 source=source_label,
                 status=TranscriptStatus.AVAILABLE,
                 segments=segments

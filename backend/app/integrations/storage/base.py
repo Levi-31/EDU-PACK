@@ -28,3 +28,4 @@ class StorageProvider(ABC):
     def delete(self, relative_path: str) -> bool:
         """Deletes file"""
         pass
+

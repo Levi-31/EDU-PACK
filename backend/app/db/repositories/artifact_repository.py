@@ -23,3 +23,4 @@ class ArtifactRepository(BaseRepository[Artifact]):
             .order_by(Artifact.created_at.desc())
             .all()
         )
+

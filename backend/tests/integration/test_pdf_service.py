@@ -56,3 +56,4 @@ async def test_pdf_compilation_and_artifact_validation(tmp_path):
     assert os.path.exists(artifact.file_path)
     assert artifact.checksum_sha256 != ""
     assert artifact.download_url == "/api/v1/jobs/test_pdf_job/download"
+

@@ -14,3 +14,4 @@ class TranscriptProvider(ABC):
         Never fabricates segments.
         """
         pass
+

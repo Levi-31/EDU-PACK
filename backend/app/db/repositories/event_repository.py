@@ -44,3 +44,4 @@ class EventRepository(BaseRepository[JobEvent]):
             .limit(limit)
             .all()
         )
+

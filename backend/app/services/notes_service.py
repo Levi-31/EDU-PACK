@@ -24,3 +24,4 @@ class NotesService:
         if model and model.notes_json:
             return StructuredVideoNotes(**model.notes_json)
         return None
+

@@ -20,3 +20,4 @@ def test_db():
     finally:
         session.close()
         Base.metadata.drop_all(bind=engine)
+

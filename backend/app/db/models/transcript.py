@@ -21,3 +21,4 @@ class Transcript(Base, TimestampMixin):
     error_message = Column(String(1000), nullable=True)
 
     job = relationship("PlaylistJob", back_populates="transcripts")
+

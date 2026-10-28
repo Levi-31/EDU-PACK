@@ -24,3 +24,4 @@ celery_app.conf.update(
 def execute_playlist_job(job_id: str):
     from app.workers.tasks import run_playlist_job
     asyncio.run(run_playlist_job(job_id))
+

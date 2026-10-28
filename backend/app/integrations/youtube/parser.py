@@ -54,3 +54,4 @@ def construct_video_url(video_id: str, timestamp_seconds: Optional[float] = None
     if timestamp_seconds is not None and timestamp_seconds > 0:
         return f"{base}&t={int(timestamp_seconds)}s"
     return base
+

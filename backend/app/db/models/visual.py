@@ -23,3 +23,4 @@ class VisualAsset(Base, TimestampMixin):
     decision_reason = Column(String(500), nullable=True)
 
     job = relationship("PlaylistJob", back_populates="visuals")
+

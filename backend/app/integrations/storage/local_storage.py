@@ -51,3 +51,4 @@ class LocalStorageProvider(StorageProvider):
             target_path.unlink()
             return True
         return False
+

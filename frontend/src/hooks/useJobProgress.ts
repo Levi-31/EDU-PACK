@@ -55,3 +55,4 @@ export function useJobProgress(jobId: string | null, onComplete?: () => void) {
 
   return { events, latestProgress, currentStage, isFinished };
 }
+

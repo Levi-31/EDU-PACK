@@ -85,3 +85,4 @@ export async function getJobNotes(jobId: string): Promise<StructuredVideoNotes[]
 export function getDownloadUrl(jobId: string): string {
   return `${API_BASE}/jobs/${jobId}/download`;
 }
+

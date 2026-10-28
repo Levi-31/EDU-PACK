@@ -72,3 +72,4 @@ flowchart TD
 - Built using Jinja2 templates (`cover.html`, `toc.html`, `chapter.html`, `revision.html`) and print CSS.
 - Rendered with Playwright headless Chromium for pixel-perfect printing and clickable external/internal links.
 - Artifact verification confirms file existence, size, SHA256 checksum, and chapter ordering.
+

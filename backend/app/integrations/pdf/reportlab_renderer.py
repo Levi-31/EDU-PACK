@@ -34,3 +34,4 @@ class ReportLabFallbackRenderer(PDFRendererInterface):
         ]
         doc.build(story)
         return buffer.getvalue()
+

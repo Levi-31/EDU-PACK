@@ -36,3 +36,4 @@ class PlaylistJob(Base, TimestampMixin):
     visuals = relationship("VisualAsset", back_populates="job", cascade="all, delete-orphan")
     artifacts = relationship("Artifact", back_populates="job", cascade="all, delete-orphan")
     events = relationship("JobEvent", back_populates="job", cascade="all, delete-orphan", order_by="JobEvent.timestamp")
+

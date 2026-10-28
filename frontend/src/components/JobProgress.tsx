@@ -155,7 +155,12 @@ export const JobProgress: React.FC<JobProgressProps> = ({
                   </span>
                   <div className="min-w-0">
                     <div className="text-slate-200 font-medium truncate">{v.title}</div>
-                    <div className="text-[11px] text-slate-500">{v.duration_formatted}</div>
+                    <div className="flex items-center space-x-2 text-[11px] text-slate-500">
+                      <span>{v.duration_formatted}</span>
+                      {v.error_message && (
+                        <span className="text-rose-400 font-mono truncate max-w-xs">&bull; {v.error_message}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -214,3 +219,4 @@ export const JobProgress: React.FC<JobProgressProps> = ({
     </div>
   );
 };
+

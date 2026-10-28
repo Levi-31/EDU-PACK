@@ -21,3 +21,4 @@ def get_notes_service(db: Session = Depends(get_db)) -> NotesService:
 
 def get_pdf_service() -> PDFService:
     return PDFService()
+

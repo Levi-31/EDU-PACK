@@ -76,3 +76,4 @@ class StructuredVideoNotes(BaseModel):
     transcript_source: str = "youtube"
     is_mock: bool = False
     review_report: ReviewReport = Field(default_factory=ReviewReport)
+

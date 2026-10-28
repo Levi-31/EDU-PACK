@@ -375,3 +375,4 @@ class MockOpenAIClient(OpenAIClientInterface):
 
     async def generate_image(self, prompt: str) -> Optional[str]:
         return None
+

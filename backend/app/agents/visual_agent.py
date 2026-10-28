@@ -38,3 +38,4 @@ class VisualDiagramAgent:
         except Exception as e:
             logger.warning(f"Visual agent skipped due to error: {e}")
             return None
+

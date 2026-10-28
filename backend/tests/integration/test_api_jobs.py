@@ -46,3 +46,4 @@ def test_create_and_get_job():
     assert list_resp.status_code == 200
     list_data = list_resp.json()
     assert list_data["total"] >= 1
+

@@ -35,3 +35,4 @@ class TranscriptData(BaseModel):
         if self.raw_text:
             return self.raw_text
         return " ".join(s.text for s in self.segments)
+

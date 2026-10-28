@@ -45,3 +45,4 @@ class PlaylistGraphState(BaseModel):
     pdf_artifact_id: Optional[str] = None
     error_summary: Optional[str] = None
     is_cancelled: bool = False
+

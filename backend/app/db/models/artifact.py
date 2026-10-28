@@ -20,3 +20,4 @@ class Artifact(Base, TimestampMixin):
     is_valid = Column(Boolean, default=True, nullable=False)
 
     job = relationship("PlaylistJob", back_populates="artifacts")
+

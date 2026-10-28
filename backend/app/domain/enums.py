@@ -63,3 +63,4 @@ class ArtifactType(str, Enum):
     DIAGRAM_SVG = "diagram_svg"
     DIAGRAM_PNG = "diagram_png"
     IMAGE_JPEG = "image_jpeg"
+

@@ -80,3 +80,4 @@ async def test_agent_graph_workflow_preserves_order_and_handles_failures():
     # 5. vid_dist_004 succeeded despite previous video failure
     assert final_state.videos[3].status == VideoProcessingStatus.COMPLETED
     assert final_state.videos[3].notes is not None
+

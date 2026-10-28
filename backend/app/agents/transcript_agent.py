@@ -90,3 +90,4 @@ class TranscriptProcessingAgent:
         for s in segments:
             lines.append(f"[{s.id} @ {s.formatted_start}] {s.text}")
         return "\n".join(lines)
+

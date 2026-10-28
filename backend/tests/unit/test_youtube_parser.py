@@ -45,3 +45,4 @@ def test_format_duration():
     assert format_duration(3723) == "1:02:03"
     assert format_duration(1510) == "25:10"
     assert format_duration(45) == "00:45"
+

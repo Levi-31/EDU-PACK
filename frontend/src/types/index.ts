@@ -205,3 +205,4 @@ export interface StructuredVideoNotes {
   flashcards: Flashcard[];
   is_mock: boolean;
 }
+

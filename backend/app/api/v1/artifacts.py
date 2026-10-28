@@ -10,7 +10,7 @@ from app.domain.enums import ArtifactType
 router = APIRouter(tags=["Artifacts"])
 
 
-@router.get("/jobs/{job_id}/download")
+@router.api_route("/jobs/{job_id}/download", methods=["GET", "HEAD"])
 def download_pdf(
     job_id: str,
     db: Session = Depends(get_db)
@@ -34,3 +34,4 @@ def download_pdf(
         media_type="application/pdf",
         filename=artifact.file_name
     )
+

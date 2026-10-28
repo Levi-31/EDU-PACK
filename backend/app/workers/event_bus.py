@@ -1,7 +1,9 @@
 import asyncio
 import json
 import logging
-from typing import Dict, Set, Optional, AsyncGenerator
+from typing import Optional, AsyncGenerator
+import redis.asyncio as aioredis
+from app.core.config import settings
 from app.db.session import SessionLocal
 from app.db.repositories.event_repository import EventRepository
 from app.db.repositories.job_repository import PlaylistJobRepository
@@ -12,36 +14,95 @@ logger = logging.getLogger(__name__)
 
 class JobEventBus:
     """
-    Event broadcaster supporting in-process asyncio queues for real-time SSE streaming,
-    along with persistent database recording for durable history.
+    Distributed event broadcaster leveraging Redis Pub/Sub for cross-container
+    event propagation between Celery workers and FastAPI SSE handlers, backed by
+    PostgreSQL persistence for durable history and reconnection replay.
     """
 
     def __init__(self):
-        self._subscribers: Dict[str, Set[asyncio.Queue]] = {}
-        self._lock = asyncio.Lock()
+        self._redis_url = settings.REDIS_URL
 
     async def subscribe(self, job_id: str) -> AsyncGenerator[dict, None]:
-        queue = asyncio.Queue(maxsize=100)
-        async with self._lock:
-            if job_id not in self._subscribers:
-                self._subscribers[job_id] = set()
-            self._subscribers[job_id].add(queue)
-
+        # 1. Replay historical events from DB first
+        last_timestamp = None
+        db = SessionLocal()
         try:
-            while True:
-                # Wait for next event
-                event = await queue.get()
-                yield event
-                queue.task_done()
-                # Check if terminal event
-                if event.get("stage") in [JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.CANCELLED.value, JobStatus.PARTIAL_SUCCESS.value]:
-                    break
+            repo = EventRepository(db)
+            past_events = repo.list_by_job(job_id)
+            for ev in past_events:
+                last_timestamp = ev.timestamp
+                yield {
+                    "job_id": ev.job_id,
+                    "video_id": ev.video_id,
+                    "stage": ev.stage,
+                    "message": ev.message,
+                    "progress": ev.progress,
+                    "timestamp": ev.timestamp.isoformat() if ev.timestamp else None,
+                    "data": ev.data or {}
+                }
+                if ev.stage in [JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.PARTIAL_SUCCESS.value, JobStatus.CANCELLED.value]:
+                    return
+        except Exception as e:
+            logger.warning(f"Error replaying DB events: {e}")
         finally:
-            async with self._lock:
-                if job_id in self._subscribers:
-                    self._subscribers[job_id].discard(queue)
-                    if not self._subscribers[job_id]:
-                        del self._subscribers[job_id]
+            db.close()
+
+        # 2. Subscribe to Redis PubSub for live events
+        redis_client = None
+        pubsub = None
+        try:
+            redis_client = aioredis.from_url(self._redis_url, decode_responses=True)
+            pubsub = redis_client.pubsub()
+            channel_name = f"events:{job_id}"
+            await pubsub.subscribe(channel_name)
+
+            while True:
+                msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                if msg and msg.get("type") == "message":
+                    data_str = msg.get("data")
+                    if data_str:
+                        event_dict = json.loads(data_str)
+                        yield event_dict
+                        if event_dict.get("stage") in [JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.PARTIAL_SUCCESS.value, JobStatus.CANCELLED.value]:
+                            break
+                await asyncio.sleep(0.1)
+
+        except Exception as e:
+            logger.info(f"Redis PubSub not available or interrupted ({e}), falling back to database polling...")
+            # Fallback: Poll DB every second
+            while True:
+                await asyncio.sleep(1.0)
+                db_poll = SessionLocal()
+                try:
+                    repo_poll = EventRepository(db_poll)
+                    new_events = repo_poll.get_events_after(job_id, last_timestamp) if last_timestamp else []
+                    for ev in new_events:
+                        last_timestamp = ev.timestamp
+                        yield {
+                            "job_id": ev.job_id,
+                            "video_id": ev.video_id,
+                            "stage": ev.stage,
+                            "message": ev.message,
+                            "progress": ev.progress,
+                            "timestamp": ev.timestamp.isoformat() if ev.timestamp else None,
+                            "data": ev.data or {}
+                        }
+                        if ev.stage in [JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.PARTIAL_SUCCESS.value, JobStatus.CANCELLED.value]:
+                            return
+                finally:
+                    db_poll.close()
+        finally:
+            if pubsub:
+                try:
+                    await pubsub.unsubscribe()
+                    await pubsub.close()
+                except Exception:
+                    pass
+            if redis_client:
+                try:
+                    await redis_client.close()
+                except Exception:
+                    pass
 
     async def publish(
         self,
@@ -61,7 +122,7 @@ class JobEventBus:
             "data": data or {}
         }
 
-        # 1. Persist to DB
+        # 1. Persist event to DB
         try:
             db = SessionLocal()
             try:
@@ -74,7 +135,7 @@ class JobEventBus:
                     video_id=video_id,
                     data=data
                 )
-                # Also update job record progress and current_stage
+                # Update current status & progress on job record
                 job_repo = PlaylistJobRepository(db)
                 job_repo.update_status(
                     job_id=job_id,
@@ -87,15 +148,13 @@ class JobEventBus:
         except Exception as e:
             logger.warning(f"Could not persist event to DB: {e}")
 
-        # 2. Broadcast to live SSE subscribers
-        async with self._lock:
-            subscribers = self._subscribers.get(job_id, set()).copy()
-
-        for q in subscribers:
-            try:
-                q.put_nowait(event_dict)
-            except asyncio.QueueFull:
-                pass
+        # 2. Publish to Redis Pub/Sub
+        try:
+            redis_client = aioredis.from_url(self._redis_url, decode_responses=True)
+            await redis_client.publish(f"events:{job_id}", json.dumps(event_dict))
+            await redis_client.close()
+        except Exception as e:
+            logger.warning(f"Could not publish event to Redis: {e}")
 
 
 event_bus = JobEventBus()
