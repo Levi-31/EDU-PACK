@@ -11,7 +11,10 @@ import {
   Layers,
   Sparkles,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  GraduationCap,
+  BookmarkCheck,
+  Compass
 } from 'lucide-react';
 import { getDownloadUrl } from '../api/client';
 
@@ -162,6 +165,19 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                 </p>
               </div>
 
+              {/* Foundational Theory & Architectural Context */}
+              {currentNote.comprehensive_theory_background && (
+                <div className="p-4 rounded-xl bg-purple-950/20 border-l-4 border-purple-500 border-y border-r border-purple-900/40 space-y-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center space-x-1.5">
+                    <GraduationCap className="w-4 h-4" />
+                    <span>Foundational Theory & Architectural Context</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-purple-200/90 leading-relaxed whitespace-pre-line">
+                    {currentNote.comprehensive_theory_background}
+                  </p>
+                </div>
+              )}
+
               {/* Key Takeaways */}
               {currentNote.key_takeaways && currentNote.key_takeaways.length > 0 && (
                 <div className="space-y-3">
@@ -215,7 +231,7 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                 )}
               </div>
 
-              {/* Detailed Sections with Timestamped Watch Links */}
+              {/* Detailed Sections with Timestamped Watch Links & Demarcation */}
               <div className="space-y-6 pt-2">
                 <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center space-x-2">
                   <BookOpen className="w-4 h-4 text-brand-400" />
@@ -249,9 +265,48 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                         )}
                       </div>
 
-                      <div className="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line">
-                        {section.markdown_content}
-                      </div>
+                      {/* Grounded From-the-Video Section */}
+                      {section.from_video && (
+                        <div className="p-3.5 rounded-lg bg-sky-950/20 border border-sky-800/40 text-xs space-y-1.5">
+                          <span className="inline-block px-2 py-0.5 rounded bg-sky-600/30 text-sky-300 font-bold text-[10px] uppercase tracking-wider">
+                            From the Video (Transcript Grounded)
+                          </span>
+                          <p className="text-slate-300 leading-relaxed whitespace-pre-line">
+                            {section.from_video}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Additional Foundational Theory */}
+                      {section.additional_theory && (
+                        <div className="p-3.5 rounded-lg bg-purple-950/20 border border-purple-800/40 text-xs space-y-1.5">
+                          <span className="inline-block px-2 py-0.5 rounded bg-purple-600/30 text-purple-300 font-bold text-[10px] uppercase tracking-wider">
+                            Additional Theory & Mechanics
+                          </span>
+                          <p className="text-purple-200/90 leading-relaxed whitespace-pre-line">
+                            {section.additional_theory}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* General Content Fallback */}
+                      {!section.from_video && !section.additional_theory && (
+                        <div className="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+                          {section.markdown_content}
+                        </div>
+                      )}
+
+                      {/* Comparison Table */}
+                      {section.comparison_table_markdown && (
+                        <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 text-xs overflow-x-auto">
+                          <span className="font-semibold text-slate-300 block mb-1 text-[11px] uppercase tracking-wider">
+                            Technical Comparison
+                          </span>
+                          <pre className="font-mono text-slate-300 text-[11px] whitespace-pre-wrap">
+                            {section.comparison_table_markdown}
+                          </pre>
+                        </div>
+                      )}
 
                       {/* Code Snippets */}
                       {section.code_snippets && section.code_snippets.map((snip, sIdx) => (
@@ -289,6 +344,25 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                           <p className="text-slate-300 leading-relaxed">{c.content}</p>
                         </div>
                       ))}
+
+                      {/* Section References / Citations */}
+                      {section.cited_sources && section.cited_sources.length > 0 && (
+                        <div className="pt-2 flex flex-wrap gap-1.5 items-center">
+                          <span className="text-[10px] text-slate-500 font-semibold uppercase">References:</span>
+                          {section.cited_sources.map((src, rIdx) => (
+                            <a
+                              key={rIdx}
+                              href={src.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors border border-slate-700"
+                            >
+                              <span>{src.title}</span>
+                              <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -327,6 +401,24 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                 </div>
               )}
 
+              {/* Common Misconceptions */}
+              {currentNote.common_misconceptions && currentNote.common_misconceptions.length > 0 && (
+                <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/40 space-y-2">
+                  <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Common Misconceptions & Clarifications</span>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-amber-200/90">
+                    {currentNote.common_misconceptions.map((misc, i) => (
+                      <li key={i} className="flex items-start space-x-1.5">
+                        <span className="text-amber-400 font-bold">&bull;</span>
+                        <span>{misc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Flashcards & Active Recall */}
               {currentNote.flashcards && currentNote.flashcards.length > 0 && (
                 <div className="space-y-3 pt-2">
@@ -349,6 +441,33 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Chapter-Wide Reference Sources */}
+              {currentNote.all_sources && currentNote.all_sources.length > 0 && (
+                <div className="pt-4 border-t border-slate-800 space-y-2">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+                    <BookmarkCheck className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Authoritative External Sources & RFCs</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {currentNote.all_sources.map((src, i) => (
+                      <a
+                        key={i}
+                        href={src.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800/80 border border-slate-800 text-xs transition-colors flex items-start justify-between gap-2"
+                      >
+                        <div>
+                          <div className="font-semibold text-slate-200 line-clamp-1">{src.title}</div>
+                          <div className="text-[10px] text-slate-500 line-clamp-1">{src.domain || src.url}</div>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -356,4 +475,3 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
     </div>
   );
 };
-

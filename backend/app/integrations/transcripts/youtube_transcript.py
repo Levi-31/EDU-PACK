@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 class YouTubeTranscriptProvider(TranscriptProvider):
     async def get_transcript(self, video_id: str, language: str = "en") -> TranscriptData:
+        if video_id.startswith("vid_dist_") or video_id.startswith("vid_demo"):
+            from app.integrations.transcripts.mock_provider import MockTranscriptProvider
+            return await MockTranscriptProvider().get_transcript(video_id, language)
+
         try:
             api = YouTubeTranscriptApi()
             

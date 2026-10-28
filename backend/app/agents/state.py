@@ -5,6 +5,8 @@ from app.domain.schemas.playlist import GenerationOptions
 from app.domain.schemas.transcript import TranscriptData
 from app.domain.schemas.notes import StructuredVideoNotes, ReviewReport
 from app.domain.schemas.visual import VisualAssetSchema
+from app.domain.schemas.topic_plan import VideoTopicPlan
+from app.domain.schemas.research import VideoResearchBundle
 
 
 class VideoGraphItem(BaseModel):
@@ -21,6 +23,8 @@ class VideoGraphItem(BaseModel):
     # Processing state
     status: VideoProcessingStatus = VideoProcessingStatus.PENDING
     transcript: Optional[TranscriptData] = None
+    topic_plan: Optional[VideoTopicPlan] = None
+    research_bundle: Optional[VideoResearchBundle] = None
     notes: Optional[StructuredVideoNotes] = None
     visual: Optional[VisualAssetSchema] = None
     review: Optional[ReviewReport] = None
@@ -45,4 +49,3 @@ class PlaylistGraphState(BaseModel):
     pdf_artifact_id: Optional[str] = None
     error_summary: Optional[str] = None
     is_cancelled: bool = False
-

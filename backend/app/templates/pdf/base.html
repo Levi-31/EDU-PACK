@@ -6,6 +6,23 @@
     <style>
         {{ css_styles }}
     </style>
+    {% if mermaid_js %}
+    <script>
+        {{ mermaid_js }}
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.mermaid) {
+                window.mermaid.initialize({
+                    startOnLoad: true,
+                    theme: 'neutral',
+                    securityLevel: 'loose',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                });
+            }
+        });
+    </script>
+    {% endif %}
 </head>
 <body>
 
@@ -26,4 +43,3 @@
 
 </body>
 </html>
-

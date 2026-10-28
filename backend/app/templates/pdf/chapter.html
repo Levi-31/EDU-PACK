@@ -39,6 +39,16 @@
             <div>{{ n.executive_summary }}</div>
         </div>
 
+        <!-- Comprehensive Theoretical Background & Context -->
+        {% if n.comprehensive_theory_background %}
+        <div class="theory-box no-break">
+            <div style="font-weight: 700; color: #7e22ce; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px; margin-bottom: 4px;">
+                &#128218; Foundational Theory & Architectural Context
+            </div>
+            <div>{{ n.comprehensive_theory_background | markdown | safe }}</div>
+        </div>
+        {% endif %}
+
         <!-- Key Takeaways -->
         {% if n.key_takeaways %}
         <div class="no-break" style="margin: 16px 0;">
@@ -77,7 +87,7 @@
         </div>
         {% endif %}
 
-        <!-- Detailed Sections with Verified Timestamps -->
+        <!-- Detailed Sections with Verified Timestamps & Clear Grounding Demarcation -->
         {% for section in n.sections %}
         <div class="section-card">
             <div class="section-header">
@@ -89,9 +99,36 @@
                 {% endif %}
             </div>
 
-            <div style="font-size: 9.5pt; color: #334155; margin-bottom: 8px;">
-                {{ section.markdown_content }}
+            <!-- Grounded Video Content -->
+            {% if section.from_video %}
+            <div class="block-grounded">
+                <span class="badge-label badge-grounded-label">&#9658; From the Video (Transcript Grounded)</span>
+                <div>{{ section.from_video | markdown | safe }}</div>
             </div>
+            {% endif %}
+
+            <!-- Supplementary Theory & Architecture -->
+            {% if section.additional_theory %}
+            <div class="block-theory">
+                <span class="badge-label badge-theory-label">&#9881; Additional Theory & Mechanics</span>
+                <div>{{ section.additional_theory | markdown | safe }}</div>
+            </div>
+            {% endif %}
+
+            <!-- If neither specific block, fallback to general markdown content -->
+            {% if not section.from_video and not section.additional_theory %}
+            <div style="font-size: 9.5pt; color: #334155; margin-bottom: 8px;">
+                {{ section.markdown_content | markdown | safe }}
+            </div>
+            {% endif %}
+
+            <!-- Comparison Table (if generated) -->
+            {% if section.comparison_table_markdown %}
+            <div class="no-break" style="margin: 10px 0;">
+                <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 4px;">Technical Comparison</div>
+                {{ section.comparison_table_markdown | markdown | safe }}
+            </div>
+            {% endif %}
 
             <!-- Code Blocks -->
             {% for snippet in section.code_snippets %}
@@ -112,14 +149,26 @@
                 <div>{{ callout.content }}</div>
             </div>
             {% endfor %}
+
+            <!-- Citations in Section -->
+            {% if section.cited_sources %}
+            <div style="margin-top: 8px;">
+                <span style="font-size: 7.5pt; color: #64748b; font-weight: 600;">References:</span>
+                {% for src in section.cited_sources %}
+                    <a href="{{ src.url }}" target="_blank" class="source-badge">
+                        &#128279; {{ src.title }} ({{ src.domain or 'docs' }})
+                    </a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
         {% endfor %}
 
-        <!-- Visual / Diagram Asset (if generated) -->
+        <!-- Visual / Diagram Asset (Rendered as Vector SVG) -->
         {% if item.visual and item.visual.mermaid_code %}
         <div class="diagram-box">
             <div style="font-weight: 700; font-size: 10pt; color: #0f172a; margin-bottom: 6px;">{{ item.visual.title }}</div>
-            <pre class="mermaid" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; text-align: left;">{{ item.visual.mermaid_code }}</pre>
+            <div class="mermaid">{{ item.visual.mermaid_code }}</div>
             <div class="diagram-caption">{{ item.visual.description }}</div>
         </div>
         {% endif %}
@@ -142,11 +191,37 @@
         </div>
         {% endif %}
 
+        <!-- Common Misconceptions -->
+        {% if n.common_misconceptions %}
+        <div class="callout callout-warning no-break">
+            <div style="font-weight: 700; margin-bottom: 4px;">&#9888; Common Misconceptions & Clarifications</div>
+            <ul style="margin: 0; padding-left: 18px; font-size: 8.5pt;">
+                {% for misc in n.common_misconceptions %}
+                    <li style="margin-bottom: 3px;">{{ misc }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <!-- Chapter Recap / Revision Sheet -->
         {% if n.revision_sheet %}
         <div class="no-break" style="background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-top: 16px; font-size: 8.5pt;">
             <span style="font-weight: 700; color: #0f172a; text-transform: uppercase; font-size: 8pt;">Chapter Recap: </span>
             <span style="color: #475569;">{{ n.revision_sheet }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Chapter-wide Authoritative Sources -->
+        {% if n.all_sources %}
+        <div class="no-break" style="margin-top: 14px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+            <div style="font-size: 8pt; font-weight: 700; color: #64748b; text-transform: uppercase;">External Research & Authoritative Documentation</div>
+            <div style="margin-top: 4px;">
+                {% for src in n.all_sources %}
+                    <a href="{{ src.url }}" target="_blank" class="source-badge">
+                        &#128279; {{ src.title }} ({{ src.domain or 'ref' }})
+                    </a>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
 

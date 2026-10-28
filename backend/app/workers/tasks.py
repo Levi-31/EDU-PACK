@@ -73,12 +73,20 @@ async def run_playlist_job(job_id: str):
         )
 
         # Select Providers (Mock vs Official)
-        if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.strip():
-            llm_client = OfficialOpenAIClient()
-            transcript_provider = YouTubeTranscriptProvider()
-        else:
+        is_mock_run = (
+            getattr(job, "is_mock", False)
+            or settings.DEMO_MODE
+            or not settings.OPENAI_API_KEY
+            or not settings.OPENAI_API_KEY.strip()
+            or "PL_DISTRIBUTED_SYSTEMS" in str(job.playlist_id)
+        )
+
+        if is_mock_run:
             llm_client = MockOpenAIClient()
             transcript_provider = MockTranscriptProvider()
+        else:
+            llm_client = OfficialOpenAIClient()
+            transcript_provider = YouTubeTranscriptProvider()
 
         pdf_service = PDFService()
 

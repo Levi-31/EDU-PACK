@@ -6,6 +6,11 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from jinja2 import Environment, FileSystemLoader
 
+try:
+    import markdown
+except ImportError:
+    markdown = None
+
 from app.core.config import settings
 from app.core.exceptions import PDFGenerationException
 from app.domain.enums import ArtifactType
@@ -22,6 +27,18 @@ from app.db.repositories.artifact_repository import ArtifactRepository
 from app.db.models.artifact import Artifact
 
 logger = logging.getLogger(__name__)
+
+
+def _render_markdown(text: Optional[str]) -> str:
+    if not text:
+        return ""
+    if markdown:
+        try:
+            return markdown.markdown(text, extensions=["tables", "fenced_code", "nl2br"])
+        except Exception:
+            pass
+    # Fallback basic formatting
+    return text.replace("\n", "<br/>")
 
 
 class PDFService:
@@ -43,6 +60,14 @@ class PDFService:
             loader=FileSystemLoader(str(template_dir)),
             autoescape=True
         )
+        self.jinja_env.filters["markdown"] = _render_markdown
+
+        # Load local Mermaid JS for offline diagram rendering
+        mermaid_path = Path(__file__).resolve().parent.parent / "static" / "js" / "mermaid.min.js"
+        if mermaid_path.exists():
+            self.mermaid_js = mermaid_path.read_text(encoding="utf-8")
+        else:
+            self.mermaid_js = ""
 
     async def compile_playlist_pdf(
         self,
@@ -115,7 +140,8 @@ class PDFService:
                 generation_date=datetime.utcnow().strftime("%B %d, %Y"),
                 consolidated_flashcards=consolidated_flashcards,
                 consolidated_glossary=consolidated_glossary,
-                css_styles=css_styles
+                css_styles=css_styles,
+                mermaid_js=self.mermaid_js
             )
 
             # 4. Render to PDF bytes
@@ -180,4 +206,3 @@ class PDFService:
         except Exception as e:
             logger.error(f"Error compiling PDF: {e}", exc_info=True)
             raise PDFGenerationException(f"PDF compilation failed: {str(e)}")
-

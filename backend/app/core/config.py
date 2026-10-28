@@ -42,6 +42,16 @@ class Settings(BaseSettings):
     MAX_CONCURRENT_LLM_REQUESTS: int = 3
     ENABLE_IMAGE_GENERATION: bool = True
 
+    # Tavily Web Research
+    TAVILY_API_KEY: str = ""
+    ENABLE_WEB_RESEARCH: bool = True
+    TAVILY_MAX_RESULTS: int = 5
+    TAVILY_SEARCH_DEPTH: str = "advanced"
+    RESEARCH_QUERIES_PER_VIDEO: int = 3
+    MAX_RESEARCH_SOURCES_PER_TOPIC: int = 5
+    MAX_PARALLEL_RESEARCH: int = 3
+    RESEARCH_CACHE_TTL_HOURS: int = 24
+
     # Demo / Mock Mode
     DEMO_MODE: bool = True
 

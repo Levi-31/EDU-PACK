@@ -49,6 +49,10 @@ class OfficialYouTubeClient(YouTubeClientInterface):
 
     async def fetch_playlist(self, playlist_input: str) -> PlaylistPreviewResponse:
         playlist_id = extract_playlist_id(playlist_input)
+        if "PL_DISTRIBUTED_SYSTEMS" in playlist_id or "PL_DEMO" in playlist_id:
+            from app.integrations.youtube.mock_client import MockYouTubeClient
+            return await MockYouTubeClient().fetch_playlist(playlist_input)
+
         async with httpx.AsyncClient(timeout=30.0) as client:
             # 1. Fetch Playlist Metadata
             meta_resp = await client.get(

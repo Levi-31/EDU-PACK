@@ -3,8 +3,11 @@ export type JobStatus =
   | 'FETCHING_PLAYLIST'
   | 'PLANNING'
   | 'FETCHING_TRANSCRIPTS'
+  | 'ANALYZING_TOPICS'
+  | 'RESEARCHING_THEORY'
   | 'GENERATING_NOTES'
   | 'GENERATING_VISUALS'
+  | 'GENERATING_DIAGRAMS'
   | 'REVIEWING_NOTES'
   | 'RENDERING_PDF'
   | 'COMPLETED'
@@ -16,8 +19,11 @@ export type VideoProcessingStatus =
   | 'PENDING'
   | 'FETCHING_TRANSCRIPT'
   | 'TRANSCRIPT_FAILED'
+  | 'ANALYZING_TOPICS'
+  | 'RESEARCHING'
   | 'GENERATING_NOTES'
   | 'GENERATING_VISUALS'
+  | 'GENERATING_DIAGRAMS'
   | 'REVIEWING'
   | 'COMPLETED'
   | 'FAILED'
@@ -158,6 +164,15 @@ export interface GlossaryItem {
   definition: string;
 }
 
+export interface ResearchSource {
+  title: string;
+  url: string;
+  domain?: string;
+  snippet: string;
+  relevance_summary?: string;
+  score?: number;
+}
+
 export interface VisualAsset {
   video_id: string;
   section_index?: number;
@@ -174,9 +189,13 @@ export interface VisualAsset {
 export interface NoteTopicSection {
   title: string;
   markdown_content: string;
+  from_video?: string;
+  additional_theory?: string;
+  comparison_table_markdown?: string;
   code_snippets: CodeSnippet[];
   callouts: CalloutBox[];
   visual?: VisualAsset;
+  cited_sources?: ResearchSource[];
   evidence_segment_ids: string[];
   timestamp_seconds?: number;
   timestamped_watch_url?: string;
@@ -196,13 +215,15 @@ export interface StructuredVideoNotes {
   learning_objectives: string[];
   prerequisites: string[];
   core_concepts: string[];
+  comprehensive_theory_background?: string;
   sections: NoteTopicSection[];
   architecture_and_workflows?: string;
   trade_offs_and_decisions: string[];
   pitfalls_and_limitations: string[];
+  common_misconceptions?: string[];
   glossary: GlossaryItem[];
   revision_sheet: string;
   flashcards: Flashcard[];
+  all_sources?: ResearchSource[];
   is_mock: boolean;
 }
-

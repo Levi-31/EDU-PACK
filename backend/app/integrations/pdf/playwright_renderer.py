@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 class PlaywrightPDFRenderer(PDFRendererInterface):
     """
-    Renders HTML + print CSS into a polished, high-fidelity PDF using Playwright Chromium.
+    Renders HTML + print CSS into a polished, publication-grade PDF using Playwright Chromium.
+    Executes client-side Mermaid rendering to transform diagram DSL into crisp vector SVGs.
     Guarantees clickable external hyperlinks (YouTube timestamps) and internal TOC navigation.
     """
 
@@ -24,11 +25,21 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
                 # Load HTML into Chromium
                 await page.set_content(html_content, wait_until="load")
                 
-                # Allow Mermaid or any client-side scripts to settle if included
+                # Execute Mermaid.js to render diagrams as inline vector SVGs
                 try:
-                    await page.wait_for_timeout(500)
-                except Exception:
-                    pass
+                    await page.evaluate("""async () => {
+                        if (window.mermaid) {
+                            try {
+                                await mermaid.run();
+                            } catch (e) {
+                                console.error('Mermaid rendering notice:', e);
+                            }
+                        }
+                    }""")
+                    # Allow layout and font rendering to settle
+                    await page.wait_for_timeout(800)
+                except Exception as ex:
+                    logger.debug(f"Mermaid execution note: {ex}")
 
                 pdf_bytes = await page.pdf(
                     format="A4",
@@ -48,4 +59,3 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
         except Exception as e:
             logger.error(f"Playwright PDF rendering failed: {e}")
             raise PDFGenerationException(f"Playwright PDF compilation failed: {str(e)}")
-
