@@ -1,0 +1,154 @@
+<div class="chapter-container page-break" id="chapter-{{ loop_index }}">
+    <a id="chapter-{{ loop_index }}" name="chapter-{{ loop_index }}" style="display: block; position: relative; top: -10px; visibility: hidden;"></a>
+    <div class="chapter-header">
+        <div class="chapter-number">Chapter {{ '%02d' % loop_index }} &bull; Original Playlist Position #{{ item.position + 1 }}</div>
+        <h2 class="chapter-title">{{ item.title }}</h2>
+        
+        <div class="video-action-bar">
+            <a href="{{ item.video_url }}" target="_blank" class="btn-watch">
+                &#9658; Watch on YouTube
+            </a>
+            <span class="meta-chip">&#9201; {{ item.duration_formatted or 'Duration N/A' }}</span>
+            <span class="meta-chip">&#128100; {{ item.channel_title or 'Instructor' }}</span>
+            {% if item.is_mock %}
+                <span class="meta-chip" style="color: #b45309; background: #fffbeb; border-color: #fde68a;">[Demo Mode Sample]</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not item.has_notes or not item.is_available %}
+        <div class="unavailable-box">
+            <div style="font-weight: 700; margin-bottom: 4px;">Transcript / Video Inaccessible</div>
+            <div>
+                {{ item.failure_reason or 'This video could not be processed because the uploader has restricted access, set the video to private, or disabled captions. No artificial or fabricated notes were generated.' }}
+            </div>
+            <div style="margin-top: 8px;">
+                <a href="{{ item.video_url }}" target="_blank" style="color: #b91c1c; font-weight: 600;">
+                    Attempt to open video directly on YouTube &rarr;
+                </a>
+            </div>
+        </div>
+    {% else %}
+        {% set n = item.notes %}
+        
+        <!-- Executive Summary -->
+        <div class="exec-summary-box">
+            <div style="font-weight: 700; color: #0369a1; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px; margin-bottom: 4px;">
+                Executive Summary
+            </div>
+            <div>{{ n.executive_summary }}</div>
+        </div>
+
+        <!-- Key Takeaways -->
+        {% if n.key_takeaways %}
+        <div class="no-break" style="margin: 16px 0;">
+            <h4 style="font-size: 10pt; color: #0f172a; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px;">Key Takeaways</h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 9.5pt;">
+                {% for takeaway in n.key_takeaways %}
+                    <li style="margin-bottom: 4px;">{{ takeaway }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Learning Objectives & Prerequisites -->
+        {% if n.learning_objectives or n.prerequisites %}
+        <div class="no-break" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; background: #f8fafc; padding: 12px; border-radius: 6px;">
+            {% if n.learning_objectives %}
+            <div>
+                <div style="font-weight: 600; font-size: 8.5pt; color: #0369a1; text-transform: uppercase;">Learning Objectives</div>
+                <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 8.5pt;">
+                    {% for obj in n.learning_objectives %}
+                        <li>{{ obj }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            {% if n.prerequisites %}
+            <div>
+                <div style="font-weight: 600; font-size: 8.5pt; color: #475569; text-transform: uppercase;">Prerequisites</div>
+                <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 8.5pt;">
+                    {% for prereq in n.prerequisites %}
+                        <li>{{ prereq }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Detailed Sections with Verified Timestamps -->
+        {% for section in n.sections %}
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">{{ section.title }}</h3>
+                {% if section.timestamped_watch_url %}
+                    <a href="{{ section.timestamped_watch_url }}" target="_blank" class="timestamp-link">
+                        &#9658; Watch section @ {{ '%02d:%02d' % (section.timestamp_seconds // 60, section.timestamp_seconds % 60) }}
+                    </a>
+                {% endif %}
+            </div>
+
+            <div style="font-size: 9.5pt; color: #334155; margin-bottom: 8px;">
+                {{ section.markdown_content }}
+            </div>
+
+            <!-- Code Blocks -->
+            {% for snippet in section.code_snippets %}
+            <div class="no-break">
+                <pre><code class="language-{{ snippet.language }}">{{ snippet.code }}</code></pre>
+                {% if snippet.caption %}
+                    <div style="font-size: 7.5pt; color: #64748b; font-style: italic; margin-top: -8px; margin-bottom: 8px;">
+                        Code Reference: {{ snippet.caption }}
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Callouts -->
+            {% for callout in section.callouts %}
+            <div class="callout callout-{{ callout.kind }}">
+                <div style="font-weight: 700; margin-bottom: 2px;">{{ callout.title }}</div>
+                <div>{{ callout.content }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <!-- Visual / Diagram Asset (if generated) -->
+        {% if item.visual and item.visual.mermaid_code %}
+        <div class="diagram-box">
+            <div style="font-weight: 700; font-size: 10pt; color: #0f172a; margin-bottom: 6px;">{{ item.visual.title }}</div>
+            <pre class="mermaid" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; text-align: left;">{{ item.visual.mermaid_code }}</pre>
+            <div class="diagram-caption">{{ item.visual.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Architecture & Trade-offs -->
+        {% if n.architecture_and_workflows or n.trade_offs_and_decisions %}
+        <div class="no-break" style="margin: 16px 0;">
+            {% if n.architecture_and_workflows %}
+                <h4 style="font-size: 9.5pt; color: #0f172a; margin: 8px 0 4px 0;">Architecture & Data Flow</h4>
+                <div style="font-size: 9pt; color: #334155; margin-bottom: 8px;">{{ n.architecture_and_workflows }}</div>
+            {% endif %}
+            {% if n.trade_offs_and_decisions %}
+                <h4 style="font-size: 9.5pt; color: #0f172a; margin: 8px 0 4px 0;">Key Design Trade-offs</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 9pt; color: #334155;">
+                    {% for to in n.trade_offs_and_decisions %}
+                        <li>{{ to }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Chapter Recap / Revision Sheet -->
+        {% if n.revision_sheet %}
+        <div class="no-break" style="background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-top: 16px; font-size: 8.5pt;">
+            <span style="font-weight: 700; color: #0f172a; text-transform: uppercase; font-size: 8pt;">Chapter Recap: </span>
+            <span style="color: #475569;">{{ n.revision_sheet }}</span>
+        </div>
+        {% endif %}
+
+    {% endif %}
+</div>

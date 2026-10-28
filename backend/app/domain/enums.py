@@ -1,0 +1,65 @@
+from enum import Enum
+
+
+class JobStatus(str, Enum):
+    QUEUED = "QUEUED"
+    FETCHING_PLAYLIST = "FETCHING_PLAYLIST"
+    PLANNING = "PLANNING"
+    FETCHING_TRANSCRIPTS = "FETCHING_TRANSCRIPTS"
+    GENERATING_NOTES = "GENERATING_NOTES"
+    GENERATING_VISUALS = "GENERATING_VISUALS"
+    REVIEWING_NOTES = "REVIEWING_NOTES"
+    RENDERING_PDF = "RENDERING_PDF"
+    COMPLETED = "COMPLETED"
+    PARTIAL_SUCCESS = "PARTIAL_SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class VideoProcessingStatus(str, Enum):
+    PENDING = "PENDING"
+    FETCHING_TRANSCRIPT = "FETCHING_TRANSCRIPT"
+    TRANSCRIPT_FAILED = "TRANSCRIPT_FAILED"
+    GENERATING_NOTES = "GENERATING_NOTES"
+    GENERATING_VISUALS = "GENERATING_VISUALS"
+    REVIEWING = "REVIEWING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+class TranscriptStatus(str, Enum):
+    NOT_FETCHED = "NOT_FETCHED"
+    AVAILABLE = "AVAILABLE"
+    UNAVAILABLE = "UNAVAILABLE"
+    DISABLED = "DISABLED"
+    FAILED = "FAILED"
+    USER_PROVIDED = "USER_PROVIDED"
+
+
+class NoteDetailLevel(str, Enum):
+    CONCISE = "concise"
+    STANDARD = "standard"
+    COMPREHENSIVE = "comprehensive"
+
+
+class PDFTheme(str, Enum):
+    EDITORIAL_NAVY = "editorial_navy"
+    TECHNICAL_SLATE = "technical_slate"
+    CLEAN_MINIMAL = "clean_minimal"
+
+
+class VisualType(str, Enum):
+    MERMAID_ARCHITECTURE = "mermaid_architecture"
+    MERMAID_SEQUENCE = "mermaid_sequence"
+    MERMAID_FLOWCHART = "mermaid_flowchart"
+    MERMAID_MINDMAP = "mermaid_mindmap"
+    CONCEPT_ILLUSTRATION = "concept_illustration"
+    NONE = "none"
+
+
+class ArtifactType(str, Enum):
+    PDF_NOTES = "pdf_notes"
+    DIAGRAM_SVG = "diagram_svg"
+    DIAGRAM_PNG = "diagram_png"
+    IMAGE_JPEG = "image_jpeg"

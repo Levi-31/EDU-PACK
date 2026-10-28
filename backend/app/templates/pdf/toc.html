@@ -1,0 +1,34 @@
+<div class="toc-container page-break">
+    <h2 class="toc-title">Table of Contents</h2>
+    
+    <div style="margin-bottom: 24px; color: #64748b; font-size: 9pt;">
+        Videos are structured in their exact original playlist sequence. Click any entry to jump directly to its technical chapter.
+    </div>
+
+    <div class="toc-list">
+        {% for item in chapters %}
+        <div class="toc-entry">
+            <div>
+                <a href="#chapter-{{ item.position + 1 }}" style="color: inherit; text-decoration: none;">
+                    <span style="font-weight: 700; color: #0284c7; margin-right: 6px;">{{ '%02d' % (item.position + 1) }}.</span>
+                    <span class="toc-entry-title">{{ item.title }}</span>
+                </a>
+                <span class="toc-entry-channel">&bull; {{ item.channel_title or 'Video' }}</span>
+                {% if not item.is_available or not item.has_notes %}
+                    <span style="font-size: 7.5pt; background: #fee2e2; color: #991b1b; padding: 1px 6px; border-radius: 3px; margin-left: 6px;">Transcript Unavailable</span>
+                {% endif %}
+            </div>
+            <div style="font-size: 8.5pt; color: #64748b; white-space: nowrap;">
+                {{ item.duration_formatted or '--:--' }}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="toc-entry" style="border-top: 2px solid #0f172a; margin-top: 16px; padding-top: 12px;">
+            <a href="#final-revision" style="color: inherit; text-decoration: none; font-weight: 700;">
+                <span style="color: #0d9488; margin-right: 6px;">&#9733;</span> Consolidated Playlist Revision & Knowledge Review
+            </a>
+            <div style="font-size: 8.5pt; color: #64748b;">Comprehensive</div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="revision-container page-break" id="final-revision">
+    <a id="final-revision" name="final-revision" style="display: block; position: relative; top: -10px; visibility: hidden;"></a>
+    <div class="chapter-header">
+        <div class="chapter-number" style="color: #0d9488;">Capstone Review</div>
+        <h2 class="chapter-title">Consolidated Playlist Revision & Flashcards</h2>
+        <div style="font-size: 9pt; color: #64748b;">
+            Synthesized review questions, core definitions, and high-frequency exam concepts across all processed video chapters.
+        </div>
+    </div>
+
+    <!-- Consolidated Flashcards / Active Recall -->
+    <h3 style="font-size: 13pt; color: #0f172a; margin: 20px 0 12px 0;">Active Recall & Flashcards</h3>
+    <div class="revision-grid">
+        {% for card in consolidated_flashcards %}
+        <div class="flashcard">
+            <div class="flashcard-q">&#10067; {{ card.question }}</div>
+            <div class="flashcard-a">&#10003; {{ card.answer }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Master Glossary of Technical Terms -->
+    {% if consolidated_glossary %}
+    <div class="page-break" style="margin-top: 24px;">
+        <h3 style="font-size: 13pt; color: #0f172a; margin: 20px 0 12px 0;">Master Technical Glossary</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
+            <thead>
+                <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1;">
+                    <th style="padding: 8px 12px; width: 30%;">Term</th>
+                    <th style="padding: 8px 12px;">Technical Definition</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in consolidated_glossary %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 12px; font-weight: 600; color: #0f172a; vertical-align: top;">{{ item.term }}</td>
+                    <td style="padding: 8px 12px; color: #334155; vertical-align: top;">{{ item.definition }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Footer provenance notice -->
+    <div style="margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 8pt; color: #94a3b8; text-align: center;">
+        Compiled with Playlist Scholar &bull; Autonomous YouTube Technical Notes & PDF Platform &bull; Page references link back to original YouTube timestamps.
+    </div>
+</div>

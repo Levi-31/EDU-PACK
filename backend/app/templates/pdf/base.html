@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ playlist.title }} — Playlist Scholar Study Guide</title>
+    <style>
+        {{ css_styles }}
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    {% include "cover.html" %}
+
+    <!-- Table of Contents -->
+    {% include "toc.html" %}
+
+    <!-- Chapters in Original Playlist Sequence -->
+    {% for item in chapters %}
+        {% set loop_index = loop.index %}
+        {% include "chapter.html" %}
+    {% endfor %}
+
+    <!-- Consolidated Capstone Revision -->
+    {% include "revision.html" %}
+
+</body>
+</html>
