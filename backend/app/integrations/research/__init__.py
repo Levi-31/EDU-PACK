@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_research_provider(settings: Settings) -> BaseResearchProvider:
-    """Factory returning TavilyResearchProvider if configured, otherwise MockResearchProvider."""
+    """Factory returning TavilyResearchProvider if configured and DEMO_MODE is False, otherwise MockResearchProvider."""
     if not settings.ENABLE_WEB_RESEARCH:
         logger.info("Web research disabled via configuration; using MockResearchProvider.")
         return MockResearchProvider()
@@ -22,4 +22,3 @@ def get_research_provider(settings: Settings) -> BaseResearchProvider:
 
     logger.info("DEMO_MODE is True or TAVILY_API_KEY not configured; using high-fidelity MockResearchProvider.")
     return MockResearchProvider()
-

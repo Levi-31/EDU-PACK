@@ -75,10 +75,10 @@ async def run_playlist_job(job_id: str):
         # Select Providers (Mock vs Official)
         is_mock_run = (
             getattr(job, "is_mock", False)
-            or settings.DEMO_MODE
             or not settings.OPENAI_API_KEY
             or not settings.OPENAI_API_KEY.strip()
             or "PL_DISTRIBUTED_SYSTEMS" in str(job.playlist_id)
+            or "PL_DEMO" in str(job.playlist_id)
         )
 
         if is_mock_run:

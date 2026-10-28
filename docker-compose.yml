@@ -40,7 +40,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/playlist_scholar
       REDIS_URL: redis://redis:6379/0
       JOB_RUNNER: celery
-      DEMO_MODE: ${DEMO_MODE:-true}
+      DEMO_MODE: ${DEMO_MODE:-false}
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_TEXT_MODEL: ${OPENAI_TEXT_MODEL:-gpt-4o-mini}
@@ -70,7 +70,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/playlist_scholar
       REDIS_URL: redis://redis:6379/0
       JOB_RUNNER: celery
-      DEMO_MODE: ${DEMO_MODE:-true}
+      DEMO_MODE: ${DEMO_MODE:-false}
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_TEXT_MODEL: ${OPENAI_TEXT_MODEL:-gpt-4o-mini}
