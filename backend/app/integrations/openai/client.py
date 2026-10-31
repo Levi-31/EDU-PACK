@@ -132,35 +132,58 @@ class OfficialOpenAIClient(OpenAIClientInterface):
         topic_plan: Optional[VideoTopicPlan] = None,
         research_bundle: Optional[VideoResearchBundle] = None
     ) -> StructuredVideoNotes:
+        # Determine depth target based on duration
+        duration_sec = video_metadata.get("duration_seconds") or 1200
+        if duration_sec < 300:
+            word_target = "300 to 600 words of focused, high-density notes"
+        elif duration_sec <= 1200:
+            word_target = "800 to 1,400 words across structured technical sections"
+        else:
+            word_target = "1,400 to 2,200 words across comprehensive, rigorous technical sections"
+
         # Format research context if available
         research_context = ""
         if research_bundle and research_bundle.sources:
-            research_context = "EXTERNAL RESEARCH & FOUNDATIONAL SOURCES (Use to enrich theory and cite):\n"
-            for s in research_bundle.sources[:5]:
+            research_context = "EXTERNAL RESEARCH & FOUNDATIONAL SOURCES (Use to enrich theory and cite accurately):\n"
+            for s in research_bundle.sources[:4]:
                 research_context += f"- Title: {s.title} ({s.url})\n  Snippet: {s.snippet}\n"
 
         topic_plan_context = ""
         if topic_plan:
-            topic_plan_context = f"PLANNED CURRICULUM OUTLINE:\nSubject: {topic_plan.overall_subject} (Audience: {topic_plan.audience_level})\n"
+            topic_plan_context = f"CURRICULUM TOPIC OUTLINE:\nSubject: {topic_plan.overall_subject} (Audience: {topic_plan.audience_level})\n"
             for t in topic_plan.planned_topics:
                 topic_plan_context += f"- {t.title}: {t.summary} (Objectives: {', '.join(t.learning_objectives)})\n"
 
         prompt = (
-            f"You are a Principal Software Architect, Systems Engineer, and Distinguished Professor.\n"
-            f"Your mission is to produce comprehensive, publication-grade technical study notes for the video: '{video_metadata.get('title')}'.\n\n"
-            f"TARGET DETAIL LEVEL: {detail_level.upper()}\n\n"
+            f"You are an expert technical instructor, principal software architect, and technical author.\n"
+            f"Your job is to turn the video transcript into a complete, self-contained learning resource for: '{video_metadata.get('title')}'.\n\n"
+            f"TARGET DETAIL LEVEL: {detail_level.upper()} (Target: {word_target})\n\n"
             f"{topic_plan_context}\n"
             f"{research_context}\n"
-            f"CRITICAL PEDAGOGICAL INSTRUCTIONS:\n"
-            f"1. DO NOT simply summarize the transcript! Students need both the practical lecture material AND the underlying theory.\n"
-            f"2. For each topic section:\n"
-            f"   - 'from_video': Accurately present the hands-on instructions, code, demo steps, and core concepts taught by the instructor, grounded in transcript evidence.\n"
-            f"   - 'additional_theory': Provide deep foundational background, architectural rationale, RFC specifications, mathematical definitions, or intermediate mechanics that explain *why* it works this way.\n"
-            f"   - 'comparison_table_markdown': Provide a clean Markdown comparison table where appropriate (e.g. comparing protocols, architectural patterns, or services).\n"
-            f"   - 'cited_sources': Reference authoritative external documentation when supporting additional theory.\n"
-            f"3. Ground all transcript claims in the provided evidence segments ({[s['id'] for s in evidence_segments[:25]]}).\n"
-            f"4. Provide rich, runnable code snippets or shell commands where applicable.\n"
-            f"5. Include 'comprehensive_theory_background', 'common_misconceptions', 'key_takeaways', 'glossary', 'revision_sheet', and 'flashcards'.\n\n"
+            f"CORE PEDAGOGICAL DIRECTIVES:\n"
+            f"1. The transcript establishes what the instructor taught, but it is NOT the limit of what you explain. "
+            f"   Expand concepts with foundational theory, internal mechanisms, intermediate reasoning, worked examples, "
+            f"   practical commands, trade-offs, and failure modes.\n"
+            f"2. REQUIRED TOPIC EXPLANATION STRUCTURE:\n"
+            f"   For each major topic section:\n"
+            f"   - 'from_video': Substantively describe what the instructor demonstrated, explained, or executed. Ground this in transcript evidence segments. Do not reduce it to 1-2 generic sentences!\n"
+            f"   - 'additional_theory': Deep foundational theory and internals explaining *why* and *how* it works under the hood. Include:\n"
+            f"       * Definition and purpose (problem it solves)\n"
+            f"       * Intuition / mental model (distinguishing analogy from technical implementation)\n"
+            f"       * Internal step-by-step mechanics, components, data flow, and control flow\n"
+            f"       * Design decisions, alternatives, and trade-offs\n"
+            f"       * Common misconceptions, failure modes, and debugging tips\n"
+            f"   - 'comparison_table_markdown': Provide a comparative Markdown table where comparing mechanisms, tools, service tiers, or design patterns.\n"
+            f"   - 'code_snippets': Provide executable CLI commands, manifests (YAML, Dockerfile, Nginx config), explaining flags, assumptions, expected outputs, and cost/cleanup warnings.\n"
+            f"   - 'cited_sources': Attach relevant, authoritative reference documentation.\n"
+            f"3. STRICT PROHIBITIONS & QUALITY RULES:\n"
+            f"   - NEVER include YouTuber salutations, conversational greetings, personal self-introductions, channel promos, or playlist housekeeping (e.g. 'Hi guys, welcome to my channel', 'My name is...', 'In this video we will continue our playlist', 'Like and subscribe'). Focus purely on core technical architecture, mechanisms, and implementation details.\n"
+            f"   - NEVER write placeholder text like 'A diagram could be used here', 'Insert image', 'Diagram to be added', or 'Visual pending'. Either provide the technical explanation directly or omit the remark.\n"
+            f"   - NEVER output empty theory blocks or fluff phrases ('In today's cloud landscape...').\n"
+            f"   - Treat video-specific observations (e.g. payment/verification quirks) as specific examples, NOT universal platform rules.\n"
+            f"   - Qualify all numerical claims or comparisons with methodology and dates.\n"
+            f"   - In flashcards and revision material: Be precise! For example, do not claim paid cloud accounts have 'no usage limits' (they have quotas, billing thresholds, and project limits).\n"
+            f"4. Ground video evidence in provided transcript segment IDs ({[s['id'] for s in evidence_segments[:25]]}).\n\n"
             f"TRANSCRIPT CONTENT:\n{transcript_text[:120000]}\n"
         )
 
@@ -171,8 +194,9 @@ class OfficialOpenAIClient(OpenAIClientInterface):
                     {
                         "role": "system",
                         "content": (
-                            "You write authoritative, in-depth computer science and systems engineering course materials. "
-                            "You clearly distinguish between what was presented in the lecture video versus foundational theory and external research."
+                            "You are an expert technical instructor and principal systems engineer writing comprehensive, "
+                            "authoritative study notes. You explain foundational theory, step-by-step internals, and practical examples "
+                            "with depth, precision, and zero placeholder text."
                         )
                     },
                     {"role": "user", "content": prompt}
@@ -206,15 +230,25 @@ class OfficialOpenAIClient(OpenAIClientInterface):
     ) -> ReviewReport:
         prompt = (
             f"You are a Principal Software Architect and Chief Technical Reviewer.\n"
-            f"Critique and verify the generated notes for '{notes.video_title}'.\n\n"
-            f"EVALUATION CRITERIA:\n"
-            f"1. GROUNDEDNESS: Are claims attributed to the video actually grounded in the transcript? (0.0 to 1.0)\n"
-            f"2. THEORETICAL DEPTH: Does the 'additional_theory' provide rigorous conceptual context and architecture explanations? (0.0 to 1.0)\n"
-            f"3. COMPLETENESS & CITATIONS: Are major concepts addressed, and are external sources properly cited?\n"
-            f"4. OVERALL STATUS: Set status to 'APPROVED' if groundedness >= 0.85 and theory is sound, otherwise 'REVISED'.\n\n"
+            f"Critique and verify the generated study notes for '{notes.video_title}'.\n\n"
+            f"EVALUATE AND SCORE (1.0 to 5.0 for each dimension):\n"
+            f"1. transcript_coverage (1-5): Does it accurately represent what the instructor demonstrated?\n"
+            f"2. explanation_depth (1-5): Does 'additional_theory' provide deep mechanisms and foundational rationale, or just brief summary?\n"
+            f"3. technical_accuracy (1-5): Are factual claims correct? Are numerical/market comparisons dated/sourced?\n"
+            f"4. practical_examples_quality (1-5): Are realistic commands/manifests included and explained?\n"
+            f"5. diagrams_usefulness (1-5): Are concepts visualized or described without placeholder text?\n"
+            f"6. citation_quality (1-5): Are cited documentation links relevant and authoritative?\n"
+            f"7. command_correctness (1-5): Are CLI commands/flags valid and safe (with cleanup/cost notes)?\n"
+            f"8. readability (1-5): Is the tone academic, authoritative, and cleanly organized?\n"
+            f"9. layout_readiness (1-5): Is it free of empty blocks and placeholder phrases?\n\n"
+            f"HARD-FAILURE CONDITIONS (Trigger status='REVISED' and set has_critical_failure=True):\n"
+            f"- Any section contains a literal placeholder like 'A diagram could be used here' or 'Insert image'.\n"
+            f"- A major topic has only 1-2 sentences of explanation.\n"
+            f"- A claim makes an unsupported generalization (e.g. claiming paid cloud accounts have no limits).\n"
+            f"- An empty or near-empty theory block exists.\n\n"
             f"Executive Summary: {notes.executive_summary}\n"
             f"Comprehensive Theory: {notes.comprehensive_theory_background}\n"
-            f"Sections: {[s.title for s in notes.sections]}\n\n"
+            f"Sections Summary:\n" + "\n".join(f"- {s.title}: from_video={bool(s.from_video)} ({len(s.from_video or '')} chars), theory={bool(s.additional_theory)} ({len(s.additional_theory or '')} chars)" for s in notes.sections) + "\n\n"
             f"TRANSCRIPT SAMPLE:\n{transcript_text[:50000]}\n"
         )
         try:
@@ -284,10 +318,34 @@ class OfficialOpenAIClient(OpenAIClientInterface):
     ) -> Optional[VisualAssetSchema]:
         prompt = (
             f"Examine the technical notes for '{notes.video_title}'.\n"
-            f"Decide whether a technical diagram (architecture, sequence, workflow, or state machine) adds genuine pedagogical value.\n"
-            f"If YES, produce clean, valid Mermaid diagram DSL (e.g. starting with 'flowchart TD', 'sequenceDiagram', or 'stateDiagram-v2').\n"
-            f"Ensure all node labels with special characters like parentheses or brackets are properly quoted.\n"
-            f"If NO, explicitly state why no visual is necessary.\n\n"
+            f"Decide whether a technical diagram (architecture, sequence, workflow, or component topology) adds genuine pedagogical value.\n"
+            f"If YES, produce clean, valid Mermaid diagram DSL (starting with 'flowchart TD' or 'flowchart LR').\n"
+            f"DIAGRAM ARCHITECTURE GUIDELINES:\n"
+            f"- For cloud & systems concepts, map clear directional relationships and boundaries using subgraphs.\n"
+            f"- For Model Context Protocol (MCP) and distributed systems:\n"
+            f"    * MCP Architecture: Host (Claude Desktop/IDE) <-> MCP Client <-> MCP Server (Tools, Resources, Prompts)\n"
+            f"    * MCP Lifecycle: Initialization (capabilities, version negotiation) -> Operational Phase (tools/call, resources/read) -> Shutdown\n"
+            f"    * MCP Transports: stdio (local subprocess via stdin/stdout) vs SSE/HTTP (remote servers with streaming)\n"
+            f"    * Resource hierarchy & IAM policy inheritance (Org -> Folders -> Projects -> Resources)\n"
+            f"    * Compute Engine & Nginx request flow (Client -> Internet -> Firewall -> VM -> Nginx -> Response)\n"
+            f"    * VPC Networking & Subnets (VPC -> Subnets -> Routes -> Firewall Rules -> Cloud NAT)\n"
+            f"    * Load Balancing & Autoscaling (Traffic -> Cloud Load Balancer -> Instance Group -> Health Checks -> Dynamic Scaling)\n"
+            f"    * Container & Image Lifecycle (Dockerfile -> Build -> Artifact Registry -> GKE/VM Runtime)\n"
+            f"    * Kubernetes / GKE Topology (Control Plane -> Worker Nodes -> Kubelet -> Pods -> Services -> Ingress)\n"
+            f"- RULES & SYNTAX REQUIREMENTS:\n"
+            f"    * ONLY use 'flowchart TD', 'flowchart LR', or 'sequenceDiagram'. NEVER use 'mindmap', 'pie', or unbundled diagram types.\n"
+            f"    * Every statement MUST be on its own separate line. NEVER put multiple statements or subgraphs on one line.\n"
+            f"    * Always use valid Mermaid arrows ('-->', '-.->', '==>'). NEVER use single-dash '->'.\n"
+            f"    * ALWAYS double-quote node labels containing special characters: e.g. A[\"MCP Host (Claude Desktop)\"] --> B[\"MCP Server\"].\n"
+            f"    * Subgraphs MUST have a unique identifier and be closed with 'end' on its own line: e.g.\n"
+            f"        subgraph Storage_Layer [\"Persistence Layer\"]\n"
+            f"            A[\"Primary DB\"]\n"
+            f"        end\n"
+            f"    * NEVER output manual fill styles with saturated colors (NO magenta fill:#ff00ff, neon, or rainbow fills).\n"
+            f"    * Let the global neutral/editorial theme handle typography, lines, and subtle node backgrounds.\n"
+            f"    * NEVER output placeholder text like 'Insert diagram' or 'A diagram could be used here'.\n"
+            f"    * Provide a meaningful title and a 1-2 sentence caption explaining what the diagram illustrates.\n"
+            f"If NO visual is needed, state the reason.\n\n"
             f"Executive summary: {notes.executive_summary}\n"
             f"Comprehensive theory: {notes.comprehensive_theory_background}\n"
             f"Architecture notes: {notes.architecture_and_workflows}\n"

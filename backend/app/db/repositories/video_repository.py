@@ -40,7 +40,7 @@ class PlaylistVideoRepository(BaseRepository[PlaylistVideo]):
         if transcript_status is not None:
             video.transcript_status = transcript_status.value if hasattr(transcript_status, "value") else str(transcript_status)
         if failure_reason is not None:
-            video.failure_reason = failure_reason
+            video.failure_reason = failure_reason[:3900] if failure_reason else None
         if status in [VideoProcessingStatus.COMPLETED, VideoProcessingStatus.FAILED, VideoProcessingStatus.SKIPPED]:
             video.processed_at = datetime.utcnow()
         self.db.commit()

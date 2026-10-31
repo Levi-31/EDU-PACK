@@ -46,6 +46,20 @@ class ReviewReport(BaseModel):
     status: str = Field(default="APPROVED", description="APPROVED, REVISED, or FLAGGED")
     groundedness_score: float = Field(default=1.0, description="0.0 to 1.0 confidence that claims match transcript")
     theory_depth_score: float = Field(default=1.0, description="0.0 to 1.0 assessment of theoretical depth and context")
+    
+    # Detailed 1-5 Dimensional Review Scores
+    transcript_coverage: float = Field(default=4.5, description="1.0 to 5.0 score for transcript fidelity and coverage")
+    explanation_depth: float = Field(default=4.5, description="1.0 to 5.0 score for in-depth foundational theory and mechanisms")
+    technical_accuracy: float = Field(default=4.5, description="1.0 to 5.0 score for factual correctness and verifiable claims")
+    practical_examples_quality: float = Field(default=4.5, description="1.0 to 5.0 score for realistic code, commands, and scenarios")
+    diagrams_usefulness: float = Field(default=4.0, description="1.0 to 5.0 score for diagram pedagogical value")
+    citation_quality: float = Field(default=4.5, description="1.0 to 5.0 score for authoritative documentation links")
+    command_correctness: float = Field(default=4.5, description="1.0 to 5.0 score for validated CLI syntax and arguments")
+    readability: float = Field(default=4.5, description="1.0 to 5.0 score for clear organization and tone")
+    layout_readiness: float = Field(default=4.5, description="1.0 to 5.0 score for absence of placeholders or formatting flaws")
+    
+    has_critical_failure: bool = Field(default=False, description="True if empty section, diagram placeholder, or unverified claim exists")
+    critical_failure_reason: Optional[str] = Field(default=None, description="Details of critical failure requiring revision")
     findings: List[str] = Field(default_factory=list, description="Specific critique findings or verification points")
     revisions_applied: int = Field(default=0, description="Number of revision cycles applied")
 
@@ -74,6 +88,7 @@ class StructuredVideoNotes(BaseModel):
     trade_offs_and_decisions: List[str] = Field(default_factory=list, description="Key design trade-offs and choices discussed")
     pitfalls_and_limitations: List[str] = Field(default_factory=list, description="Common mistakes, caveats, or anti-patterns")
     common_misconceptions: List[str] = Field(default_factory=list, description="Clarifications on frequent misunderstandings or edge cases")
+    visual: Optional[VisualAssetSchema] = Field(default=None, description="Optional diagram or architectural visual spec for this video chapter")
     
     # Review & Revision Aids
     glossary: List[GlossaryItem] = Field(default_factory=list, description="Glossary of technical terms")

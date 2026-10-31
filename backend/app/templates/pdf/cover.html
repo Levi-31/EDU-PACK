@@ -1,41 +1,32 @@
 <div class="cover-container">
     <div>
-        <div class="cover-badge">TECHNICAL LEARNING SYLLABUS & COMPENDIUM</div>
+        <div class="cover-badge">Technical Reference Handbook & Curriculum Notes</div>
         <h1 class="cover-title">{{ playlist.title }}</h1>
         <div class="cover-subtitle">
             {% if playlist.description %}
-                {{ playlist.description[:250] }}{% if playlist.description|length > 250 %}...{% endif %}
+                {{ playlist.description[:280] }}{% if playlist.description|length > 280 %}...{% endif %}
             {% else %}
-                High-quality technical study guide and comprehensive video notes synthesized by Playlist Scholar.
+                Comprehensive technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by Playlist Scholar.
             {% endif %}
         </div>
     </div>
 
     <div>
         <div style="margin-bottom: 24px;">
-            <a href="{{ playlist.playlist_url }}" target="_blank" style="color: #38bdf8; font-size: 9pt; font-weight: 600; text-decoration: none;">
-                &#9658; View Original YouTube Playlist &rarr;
+            <a href="{{ playlist.playlist_url }}" target="_blank" style="color: var(--color-accent); font-size: 9pt; font-weight: 600; text-decoration: none;">
+                View Original YouTube Playlist &rarr;
             </a>
         </div>
 
-        <div class="cover-metadata">
+        <div class="cover-meta cover-metadata">
             <div>
-                <div class="meta-label">Channel / Instructor</div>
-                <div class="meta-val">{{ playlist.channel_name or 'YouTube Creator' }}</div>
+                <div class="cover-meta-item-label meta-label">Curriculum Scope</div>
+                <div class="cover-meta-item-val meta-val">{{ completed_count }} of {{ total_count }} Lectures Synthesized</div>
             </div>
             <div>
-                <div class="meta-label">Curriculum Scope</div>
-                <div class="meta-val">{{ completed_count }} of {{ total_count }} Videos Processed</div>
-            </div>
-            <div>
-                <div class="meta-label">Generated Timestamp</div>
-                <div class="meta-val">{{ generation_date }}</div>
-            </div>
-            <div>
-                <div class="meta-label">Document ID</div>
-                <div class="meta-val">{{ job.id[:8] }}...{{ job.id[-4:] }}</div>
+                <div class="cover-meta-item-label meta-label">Publication Date</div>
+                <div class="cover-meta-item-val meta-val">{{ generation_date }}</div>
             </div>
         </div>
     </div>
 </div>
-

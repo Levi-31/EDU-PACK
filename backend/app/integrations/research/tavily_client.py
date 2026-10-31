@@ -10,6 +10,20 @@ from app.domain.schemas.research import ResearchSource
 logger = logging.getLogger(__name__)
 
 
+DISALLOWED_DOMAINS = {
+    "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be",
+    "facebook.com", "www.facebook.com",
+    "twitter.com", "x.com",
+    "instagram.com", "tiktok.com",
+    "reddit.com", "quora.com", "pinterest.com"
+}
+
+AUTHORITATIVE_KEYWORDS = [
+    "cloud.google.com", "docs.cloud.google.com", "kubernetes.io", "docker.com",
+    "github.com", "ietf.org", "nginx.org", "python.org", "kernel.org", "developer.mozilla.org"
+]
+
+
 class TavilyResearchProvider(BaseResearchProvider):
     def __init__(self, api_key: str, search_depth: str = "advanced", timeout_seconds: float = 15.0):
         self.api_key = api_key
@@ -70,6 +84,20 @@ class TavilyResearchProvider(BaseResearchProvider):
                         except Exception:
                             domain = ""
 
+                    # Filter out social media, video platforms, and user forums
+                    if any(domain == d or domain.endswith("." + d) for d in DISALLOWED_DOMAINS):
+                        continue
+
+                    # Filter out obviously irrelevant audio/video codec results for cloud infrastructure
+                    title_lower = title.lower()
+                    if ("opus" in title_lower or "audio codec" in title_lower) and "audio" not in query.lower():
+                        continue
+
+                    # Score boost for authoritative engineering documentation
+                    base_score = float(item.get("score", 0.0)) if item.get("score") is not None else 0.5
+                    if any(auth in domain for auth in AUTHORITATIVE_KEYWORDS):
+                        base_score += 0.3
+
                     sources.append(
                         ResearchSource(
                             title=title,
@@ -77,7 +105,7 @@ class TavilyResearchProvider(BaseResearchProvider):
                             domain=domain,
                             snippet=cleaned_snippet,
                             relevance_summary=f"External documentation retrieved for query: '{query}'",
-                            score=float(item.get("score", 0.0)) if item.get("score") is not None else None,
+                            score=base_score,
                         )
                     )
 

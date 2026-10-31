@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 from app.db.models.base import generate_uuid, TimestampMixin
@@ -14,13 +14,13 @@ class VisualAsset(Base, TimestampMixin):
     
     asset_type = Column(String(50), nullable=False)
     title = Column(String(255), nullable=False)
-    description = Column(String(1000), nullable=False)
+    description = Column(Text, nullable=False)
     
-    mermaid_code = Column(String, nullable=True)
+    mermaid_code = Column(Text, nullable=True)
     image_url = Column(String(1000), nullable=True)
     mime_type = Column(String(50), default="image/svg+xml", nullable=False)
     storage_key = Column(String(500), nullable=True)
-    decision_reason = Column(String(500), nullable=True)
+    decision_reason = Column(Text, nullable=True)
 
     job = relationship("PlaylistJob", back_populates="visuals")
 

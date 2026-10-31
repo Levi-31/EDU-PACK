@@ -3,27 +3,125 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-100;
+  :root {
+    /* Light Mode Tokens (Stitch Linear Edition) */
+    --surface: 251 248 255;            /* #fbf8ff */
+    --surface-dim: 218 217 227;        /* #dad9e3 */
+    --surface-bright: 255 255 255;     /* #ffffff */
+    --surface-lowest: 255 255 255;     /* #ffffff */
+    --surface-low: 244 242 253;        /* #f4f2fd */
+    --surface-container: 238 237 247;  /* #eeedf7 */
+    --surface-high: 232 230 241;       /* #e8e6f1 */
+    --surface-highest: 222 220 230;    /* #dedce6 */
+    --on-surface: 27 27 30;            /* #1b1b1e */
+    --on-surface-variant: 71 70 75;    /* #47464b */
+    --outline: 119 118 123;            /* #77767b */
+    --outline-variant: 199 197 208;    /* #c7c5d0 */
+    --primary: 94 106 210;             /* #5e6ad2 Linear purple */
+    --primary-container: 94 106 210;   /* #5e6ad2 */
+    --on-primary: 255 255 255;
+    --on-primary-container: 255 255 255;
+    --secondary: 79 82 178;            /* #4f52b2 */
+    --secondary-container: 224 225 255;
+    --tertiary: 2 132 199;             /* #0284c7 */
+    --tertiary-container: 224 242 254;
+    --on-tertiary: 255 255 255;
+    --error: 186 26 26;
+    --error-container: 255 218 214;
+  }
+
+  .dark {
+    /* Dark Mode Tokens (Stitch Linear Dark Edition) */
+    --surface: 18 19 24;               /* #121318 */
+    --surface-dim: 18 19 24;
+    --surface-bright: 56 57 63;        /* #38393f */
+    --surface-lowest: 13 14 19;        /* #0d0e13 */
+    --surface-low: 26 27 33;           /* #1a1b21 */
+    --surface-container: 30 31 37;     /* #1e1f25 */
+    --surface-high: 41 42 47;          /* #292a2f */
+    --surface-highest: 52 52 58;       /* #34343a */
+    --on-surface: 227 225 233;         /* #e3e1e9 */
+    --on-surface-variant: 198 197 213; /* #c6c5d5 */
+    --outline: 144 143 158;            /* #908f9e */
+    --outline-variant: 69 70 82;       /* #454652 */
+    --primary: 189 194 255;            /* #bdc2ff */
+    --primary-container: 94 106 210;   /* #5e6ad2 */
+    --on-primary: 18 31 139;           /* #121f8b */
+    --on-primary-container: 253 250 255; /* #fdfaff */
+    --secondary: 192 193 255;          /* #c0c1ff */
+    --secondary-container: 49 49 192;  /* #3131c0 */
+    --tertiary: 123 208 255;           /* #7bd0ff */
+    --tertiary-container: 0 124 168;   /* #007ca8 */
+    --on-tertiary: 0 53 74;
+    --error: 255 180 171;              /* #ffb4ab */
+    --error-container: 147 0 10;       /* #93000a */
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: rgb(var(--surface));
+    color: rgb(var(--on-surface));
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 }
 
-/* Custom scrollbars */
+/* Linear precision scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+  background: rgba(144, 143, 158, 0.25);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(144, 143, 158, 0.45);
 }
 
+/* Linear-grade entrance animation & smooth timing curves */
+@keyframes linearEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.linear-animate-entrance {
+  animation: linearEntrance 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Universal hardware-accelerated smooth transitions */
+.smooth-transition {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Material symbols font settings */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+}

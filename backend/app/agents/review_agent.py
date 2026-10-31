@@ -41,9 +41,41 @@ class NotesReviewAgent:
                 research_bundle=research_bundle
             )
 
-            # Check if revision required based on grounding or depth
+            # Programmatic deterministic quality validation
+            for s in notes.sections:
+                combined_text = f"{s.from_video or ''} {s.additional_theory or ''} {s.markdown_content or ''}".lower()
+                if "diagram could be used" in combined_text or "insert image" in combined_text:
+                    report.has_critical_failure = True
+                    report.critical_failure_reason = f"Placeholder phrase detected in section '{s.title}'"
+                    report.findings.append(f"Hard failure: placeholder diagram text found in section '{s.title}'")
+                    report.status = "REVISED"
+
+                if "model command protocol" in combined_text:
+                    report.has_critical_failure = True
+                    report.critical_failure_reason = f"Incorrect terminology 'Model Command Protocol' in section '{s.title}'"
+                    report.findings.append("Hard failure: 'Model Command Protocol' detected; must use 'Model Context Protocol'")
+                    report.status = "REVISED"
+
+                if any(dummy in combined_text for dummy in ["example.com", "cloud.domain.com"]):
+                    report.has_critical_failure = True
+                    report.critical_failure_reason = f"Placeholder dummy URL detected in section '{s.title}'"
+                    report.findings.append(f"Hard failure: placeholder URL found in section '{s.title}'")
+                    report.status = "REVISED"
+
+                if not s.from_video and not s.additional_theory and not s.markdown_content:
+                    report.has_critical_failure = True
+                    report.critical_failure_reason = f"Empty content in section '{s.title}'"
+                    report.findings.append(f"Hard failure: section '{s.title}' contains zero content")
+                    report.status = "REVISED"
+
+            # Check if revision required based on grounding, depth, or hard failures
             needs_revision = (
-                (report.groundedness_score < 0.85 or report.theory_depth_score < 0.70)
+                (
+                    report.groundedness_score < 0.85
+                    or report.theory_depth_score < 0.70
+                    or report.has_critical_failure
+                    or report.status == "REVISED"
+                )
                 and current_revision_count < self.max_revisions
             )
             report.revisions_applied = current_revision_count

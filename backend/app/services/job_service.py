@@ -54,26 +54,31 @@ class JobService:
             total_videos=len(preview.videos),
             is_mock=preview.is_mock
         )
-        created_job = self.job_repo.create(job)
+        try:
+            created_job = self.job_repo.create(job)
 
-        # 3. Create PlaylistVideo Entities in original position
-        for v in preview.videos:
-            status = VideoProcessingStatus.PENDING if v.is_available else VideoProcessingStatus.SKIPPED
-            video_entity = PlaylistVideo(
-                job_id=created_job.id,
-                video_id=v.video_id,
-                original_position=v.original_position,
-                title=v.title,
-                channel_title=v.channel_title,
-                description=v.description,
-                thumbnail_url=v.thumbnail_url,
-                duration_seconds=v.duration_seconds,
-                video_url=v.video_url,
-                processing_status=status.value,
-                transcript_status=TranscriptStatus.NOT_FETCHED.value,
-                failure_reason=v.status_note
-            )
-            self.video_repo.create(video_entity)
+            # 3. Create PlaylistVideo Entities in original position
+            for v in preview.videos:
+                status = VideoProcessingStatus.PENDING if v.is_available else VideoProcessingStatus.SKIPPED
+                video_entity = PlaylistVideo(
+                    job_id=created_job.id,
+                    video_id=v.video_id,
+                    original_position=v.original_position,
+                    title=v.title,
+                    channel_title=v.channel_title,
+                    description=v.description,
+                    thumbnail_url=v.thumbnail_url,
+                    duration_seconds=v.duration_seconds,
+                    video_url=v.video_url,
+                    processing_status=status.value,
+                    transcript_status=TranscriptStatus.NOT_FETCHED.value,
+                    failure_reason=v.status_note
+                )
+                self.video_repo.create(video_entity)
+        except Exception as e:
+            self.db.rollback()
+            logger.error("Failed creating job and videos in database: %s", e)
+            raise
 
         # 4. Dispatch Job
         if settings.JOB_RUNNER == "celery":

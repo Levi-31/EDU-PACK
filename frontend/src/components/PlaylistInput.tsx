@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Youtube, Play, ArrowRight, ShieldCheck, FileText, Cpu, CheckCircle } from 'lucide-react';
+import { Youtube, ArrowRight, X, Sparkles, ShieldCheck, Workflow, FileText, CheckCircle2 } from 'lucide-react';
 
 interface PlaylistInputProps {
   onFetchPreview: (input: string) => void;
@@ -21,135 +21,188 @@ export const PlaylistInput: React.FC<PlaylistInputProps> = ({
     }
   };
 
-  const loadSample = (sampleId: string) => {
-    setPlaylistInput(sampleId);
-    onFetchPreview(sampleId);
+  const loadPreset = (presetUrl: string) => {
+    setPlaylistInput(presetUrl);
+    onFetchPreview(presetUrl);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 py-6">
-      {/* Hero Header */}
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold uppercase tracking-wider">
-          <Cpu className="w-3.5 h-3.5" />
-          <span>Agentic Technical Education Platform</span>
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-          Turn Any YouTube Playlist Into A <br />
-          <span className="bg-gradient-to-r from-brand-400 via-sky-300 to-teal-300 bg-clip-text text-transparent">
-            Production-Grade Technical Study Guide
-          </span>
+    <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center pt-8 pb-16 px-4 linear-animate-entrance">
+      {/* Subtle Radial Gradient Glow */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[540px] h-[300px] bg-gradient-to-tr from-secondary-container/10 via-primary-container/15 to-tertiary-container/10 blur-[100px] pointer-events-none rounded-full opacity-60"></div>
+
+      {/* Refined Badge Pill */}
+      <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-surface-container-high/70 backdrop-blur-md shadow-sm mb-6 border border-outline-variant/30 text-xs font-mono">
+        <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+        <span className="text-on-surface-variant tracking-wider uppercase font-semibold">
+          Autonomous Curriculum Synthesis
+        </span>
+        <span className="text-outline">&bull;</span>
+        <span className="text-primary font-normal">Multi-Agent</span>
+      </div>
+
+      {/* Main Headline & Subtitle */}
+      <div className="text-center max-w-2xl mb-8 relative z-10 flex flex-col items-center">
+        <h1 className="font-geist text-3xl sm:text-4xl lg:text-5xl text-on-surface font-semibold tracking-tight leading-tight mb-3">
+          Turn Any YouTube Playlist Into A Structured Study Handbook
         </h1>
-        <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
-          Autonomous multi-agent synthesis with LangGraph. Extracts verified transcripts,
-          generates architectural diagrams, preserves precise video timestamps, and compiles a publication-ready PDF.
+        <p className="text-sm sm:text-base text-on-surface-variant font-sans max-w-xl leading-relaxed">
+          Extracts verified video transcripts, enriches concepts with foundational theory,
+          generates visual diagrams, and compiles an editorial monograph PDF.
         </p>
       </div>
 
-      {/* Input Form Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-slate-300">
-            YouTube Playlist URL or Playlist ID
-          </label>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <Youtube className="w-5 h-5 text-red-500" />
-              </div>
-              <input
-                type="text"
-                value={playlistInput}
-                onChange={(e) => setPlaylistInput(e.target.value)}
-                placeholder="https://www.youtube.com/playlist?list=PL_DISTRIBUTED_SYSTEMS_2026"
-                className="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm transition-all"
-                disabled={isLoading}
-              />
+      {/* Input Box */}
+      <div className="w-full max-w-2xl mb-8 relative z-10">
+        <div className="relative bg-surface-container/90 backdrop-blur-xl rounded-2xl p-2 shadow-xl border border-outline-variant/40 focus-within:border-primary-container focus-within:shadow-[0_0_24px_rgba(94,106,210,0.25)] smooth-transition">
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full">
+            <div className="pl-3 text-red-500 shrink-0">
+              <Youtube className="w-5 h-5 text-red-500" />
             </div>
+
+            <input
+              type="text"
+              id="playlist-url-input"
+              value={playlistInput}
+              onChange={(e) => setPlaylistInput(e.target.value)}
+              placeholder="https://www.youtube.com/playlist?list=..."
+              className="w-full bg-transparent py-2.5 px-1 text-on-surface font-sans text-sm placeholder:text-outline/60 focus:outline-none tracking-tight"
+              disabled={isLoading}
+              autoFocus
+            />
+
+            {playlistInput && (
+              <button
+                type="button"
+                onClick={() => setPlaylistInput('')}
+                className="text-outline hover:text-on-surface p-1 smooth-transition"
+                title="Clear input"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               type="submit"
               disabled={isLoading || !playlistInput.trim()}
-              className="px-6 py-3.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-brand-600/25 flex items-center justify-center space-x-2 shrink-0"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-container hover:bg-primary-container/90 disabled:opacity-50 disabled:cursor-not-allowed text-on-primary-container rounded-xl font-sans text-xs sm:text-sm font-semibold tracking-tight shadow-sm smooth-transition shrink-0 active:scale-[0.98]"
             >
               {isLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Inspecting Playlist...</span>
+                  <div className="w-3.5 h-3.5 border-2 border-on-primary-container/30 border-t-on-primary-container rounded-full animate-spin" />
+                  <span>Inspecting...</span>
                 </>
               ) : (
                 <>
                   <span>Fetch Playlist</span>
                   <ArrowRight className="w-4 h-4" />
+                  <kbd className="hidden sm:inline-block ml-0.5 px-1.5 py-0.5 rounded bg-surface-container-lowest/40 font-mono text-[10px] text-primary tracking-normal uppercase border border-outline-variant/20">
+                    ↵
+                  </kbd>
                 </>
               )}
             </button>
-          </div>
+          </form>
+        </div>
 
-          {errorMessage && (
-            <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center space-x-2">
-              <span className="font-semibold">Error:</span>
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Quick Demo Buttons */}
-          <div className="pt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-            <span className="font-medium text-slate-500">Quick Test Samples:</span>
-            <button
-              type="button"
-              onClick={() => loadSample('https://www.youtube.com/playlist?list=PL_DISTRIBUTED_SYSTEMS_2026')}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors flex items-center space-x-1"
-            >
-              <Play className="w-3 h-3 text-brand-400" />
-              <span>Distributed Systems (4 Videos)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => loadSample('PL_PAGINATED_MULTI_PAGE_SERIES')}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors flex items-center space-x-1"
-            >
-              <Play className="w-3 h-3 text-teal-400" />
-              <span>55-Video Paginated Boundary Test</span>
-            </button>
+        {errorMessage && (
+          <div className="mt-3 p-3 rounded-xl bg-error-container/20 border border-error-container/40 text-error text-xs flex items-center gap-2">
+            <span className="font-semibold uppercase tracking-wider font-mono">Error:</span>
+            <span>{errorMessage}</span>
           </div>
-        </form>
+        )}
+
+        {/* Quick Sample Presets */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs text-on-surface-variant font-mono">
+          <span className="text-outline">Quick Samples:</span>
+          <button
+            type="button"
+            onClick={() => loadPreset('https://www.youtube.com/playlist?list=PL_DISTRIBUTED_SYSTEMS_2026')}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface smooth-transition border border-outline-variant/30 shadow-sm active:scale-[0.97]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            <span>Distributed Systems (4 vids)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => loadPreset('https://www.youtube.com/playlist?list=PL_TRANSFORMER_ARCH_12VIDS')}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface smooth-transition border border-outline-variant/30 shadow-sm active:scale-[0.97]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            <span>Transformer Architecture (12 vids)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Feature Pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-2.5">
-          <div className="w-9 h-9 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5" />
+      {/* 3 Refined Capability Cards: Clean, High-Craft, Not Cluttered */}
+      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 relative z-10">
+        {/* Pillar 1 */}
+        <div className="p-5 rounded-2xl bg-surface-container-low/80 hover:bg-surface-container border border-outline-variant/30 hover:border-outline-variant/60 shadow-sm smooth-transition flex flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-primary border border-outline-variant/30">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <h3 className="font-geist text-base font-semibold text-on-surface">
+              Transcript Grounding
+            </h3>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Every technical explanation links directly to verified video timestamps with zero hallucinated claims.
+            </p>
           </div>
-          <h3 className="font-semibold text-white text-sm">Grounded Transcripts & Timestamps</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Every section links directly back to the exact video timestamp. Zero hallucinated timestamps or fabricated claims.
-          </p>
+          <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-[11px] font-mono text-outline">
+            <span className="text-tertiary flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>Timestamp Anchors</span>
+            </span>
+            <span>Accurate</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-2.5">
-          <div className="w-9 h-9 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
-            <Cpu className="w-5 h-5" />
+        {/* Pillar 2 */}
+        <div className="p-5 rounded-2xl bg-surface-container-low/80 hover:bg-surface-container border border-outline-variant/30 hover:border-outline-variant/60 shadow-sm smooth-transition flex flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-secondary border border-outline-variant/30">
+              <Workflow className="w-4 h-4" />
+            </div>
+            <h3 className="font-geist text-base font-semibold text-on-surface">
+              Architectural Diagrams
+            </h3>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Converts complex multi-step workflows, relationships, and taxonomies into clean vector Mermaid diagrams.
+            </p>
           </div>
-          <h3 className="font-semibold text-white text-sm">LangGraph Agentic Review</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Multi-stage workflow: Planning coordinator, transcript chunking, notes extraction, conditional Mermaid visuals, and critic agent.
-          </p>
+          <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-[11px] font-mono text-outline">
+            <span className="text-secondary flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>Flowcharts & Mindmaps</span>
+            </span>
+            <span>Mermaid.js</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-2.5">
-          <div className="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
-            <FileText className="w-5 h-5" />
+        {/* Pillar 3 */}
+        <div className="p-5 rounded-2xl bg-surface-container-low/80 hover:bg-surface-container border border-outline-variant/30 hover:border-outline-variant/60 shadow-sm smooth-transition flex flex-col justify-between gap-4">
+          <div className="space-y-2">
+            <div className="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-tertiary border border-outline-variant/30">
+              <FileText className="w-4 h-4" />
+            </div>
+            <h3 className="font-geist text-base font-semibold text-on-surface">
+              Publication-Grade PDF
+            </h3>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Compiled with university press typography, structured table of contents, and active recall flashcards.
+            </p>
           </div>
-          <h3 className="font-semibold text-white text-sm">Publication-Grade PDF</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Rendered with headless Chromium. Features editorial cover, clickable table of contents, code blocks, diagrams, and recap flashcards.
-          </p>
+          <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-[11px] font-mono text-outline">
+            <span className="text-primary flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>A4 Monograph</span>
+            </span>
+            <span>Print-Ready</span>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-

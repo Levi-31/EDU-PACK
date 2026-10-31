@@ -208,6 +208,8 @@ class PlaylistWorkflowOrchestrator:
                     enable_visuals=state.options.enable_visuals
                 )
                 item.visual = visual
+                if item.notes:
+                    item.notes.visual = visual
 
             # 6. Review & Quality Critique (with bounded revision loop)
             item.status = VideoProcessingStatus.REVIEWING
@@ -250,6 +252,8 @@ class PlaylistWorkflowOrchestrator:
                         notes=revised_notes,
                         enable_visuals=True
                     )
+                    if item.notes:
+                        item.notes.visual = item.visual
 
             item.status = VideoProcessingStatus.COMPLETED
             return item

@@ -87,12 +87,16 @@ class ResearchTheoryAgent:
         tasks = [execute_query(tid, q) for tid, q in selected_queries]
         await asyncio.gather(*tasks)
 
-        logger.info("Research complete for video '%s': %d unique sources found", vid, len(all_sources))
+        # Sort sources by authority score and select top 4 most relevant sources
+        all_sources.sort(key=lambda s: s.score or 0.0, reverse=True)
+        curated_sources = all_sources[:4]
+
+        logger.info("Research complete for video '%s': %d curated authoritative sources retained", vid, len(curated_sources))
         return VideoResearchBundle(
             video_id=vid,
             queries_executed=[q for _, q in selected_queries],
-            sources=all_sources,
+            sources=curated_sources,
             topic_results=topic_results,
-            enrichment_notes=f"Retrieved {len(all_sources)} authoritative sources across {len(selected_queries)} targeted queries."
+            enrichment_notes=f"Retrieved {len(curated_sources)} authoritative sources across {len(selected_queries)} targeted queries."
         )
 

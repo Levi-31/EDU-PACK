@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, JSON, DateTime
+from sqlalchemy import Column, String, ForeignKey, JSON, DateTime, Text
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 from app.db.models.base import generate_uuid, TimestampMixin
@@ -17,8 +17,8 @@ class Transcript(Base, TimestampMixin):
     
     transcript_hash = Column(String(64), nullable=True)
     segments_json = Column(JSON, nullable=False, default=list)
-    raw_text = Column(String, nullable=True)
-    error_message = Column(String(1000), nullable=True)
+    raw_text = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
 
     job = relationship("PlaylistJob", back_populates="transcripts")
 

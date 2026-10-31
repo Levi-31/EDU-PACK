@@ -1,35 +1,33 @@
 <div class="toc-container page-break">
-    <h2 class="toc-title">Table of Contents</h2>
-    
-    <div style="margin-bottom: 24px; color: #64748b; font-size: 9pt;">
-        Videos are structured in their exact original playlist sequence. Click any entry to jump directly to its technical chapter.
-    </div>
+    <h2 class="toc-title">Contents</h2>
 
     <div class="toc-list">
         {% for item in chapters %}
-        <div class="toc-entry">
-            <div>
-                <a href="#chapter-{{ item.position + 1 }}" style="color: inherit; text-decoration: none;">
-                    <span style="font-weight: 700; color: #0284c7; margin-right: 6px;">{{ '%02d' % (item.position + 1) }}.</span>
-                    <span class="toc-entry-title">{{ item.title }}</span>
-                </a>
-                <span class="toc-entry-channel">&bull; {{ item.channel_title or 'Video' }}</span>
-                {% if not item.is_available or not item.has_notes %}
-                    <span style="font-size: 7.5pt; background: #fee2e2; color: #991b1b; padding: 1px 6px; border-radius: 3px; margin-left: 6px;">Transcript Unavailable</span>
-                {% endif %}
-            </div>
-            <div style="font-size: 8.5pt; color: #64748b; white-space: nowrap;">
-                {{ item.duration_formatted or '--:--' }}
-            </div>
+        {% set ch_num = loop.index %}
+        <div class="toc-row toc-entry">
+            <a href="#chapter-{{ ch_num }}" class="toc-link toc-entry-link">
+                <span class="toc-num toc-entry-num">{{ '%02d' % ch_num }}</span>
+                <span class="toc-text">
+                    <span class="toc-title-text toc-entry-title">{{ item.clean_title or item.title }}</span>
+                    {% if not item.is_available or not item.has_notes %}
+                        <span class="toc-badge-unavailable">Transcript Unavailable</span>
+                    {% endif %}
+                </span>
+                <span class="toc-leader"></span>
+                <span class="toc-page">{{ item.page_number or '--' }}</span>
+            </a>
         </div>
         {% endfor %}
-        
-        <div class="toc-entry" style="border-top: 2px solid #0f172a; margin-top: 16px; padding-top: 12px;">
-            <a href="#final-revision" style="color: inherit; text-decoration: none; font-weight: 700;">
-                <span style="color: #0d9488; margin-right: 6px;">&#9733;</span> Consolidated Playlist Revision & Knowledge Review
+
+        <div class="toc-row toc-entry toc-review-row toc-entry-revision">
+            <a href="#final-revision" class="toc-link toc-entry-link">
+                <span class="toc-num toc-entry-num"></span>
+                <span class="toc-text">
+                    <span class="toc-title-text toc-entry-title">Consolidated Review & Knowledge Flashcards</span>
+                </span>
+                <span class="toc-leader"></span>
+                <span class="toc-page">{{ review_page_number or '--' }}</span>
             </a>
-            <div style="font-size: 8.5pt; color: #64748b;">Comprehensive</div>
         </div>
     </div>
 </div>
-

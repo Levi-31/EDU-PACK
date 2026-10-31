@@ -28,6 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     fonts-liberation \
     fonts-inter \
+    fonts-noto-core \
+    fonts-indic \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .

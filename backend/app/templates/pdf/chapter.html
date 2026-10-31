@@ -1,17 +1,14 @@
 <div class="chapter-container page-break" id="chapter-{{ loop_index }}">
-    <a id="chapter-{{ loop_index }}" name="chapter-{{ loop_index }}" style="display: block; position: relative; top: -10px; visibility: hidden;"></a>
     <div class="chapter-header">
-        <div class="chapter-number">Chapter {{ '%02d' % loop_index }} &bull; Original Playlist Position #{{ item.position + 1 }}</div>
-        <h2 class="chapter-title">{{ item.title }}</h2>
+        <div class="chapter-number">Chapter {{ '%02d' % loop_index }} &bull; Lecture {{ item.position + 1 }}</div>
+        <h2 class="chapter-title">{{ item.clean_title or item.title }}</h2>
         
         <div class="video-action-bar">
             <a href="{{ item.video_url }}" target="_blank" class="btn-watch">
-                &#9658; Watch on YouTube
+                Watch on YouTube &rarr;
             </a>
-            <span class="meta-chip">&#9201; {{ item.duration_formatted or 'Duration N/A' }}</span>
-            <span class="meta-chip">&#128100; {{ item.channel_title or 'Instructor' }}</span>
             {% if item.is_mock %}
-                <span class="meta-chip" style="color: #b45309; background: #fffbeb; border-color: #fde68a;">[Demo Mode Sample]</span>
+                <span class="source-badge">[Demo Mode Sample]</span>
             {% endif %}
         </div>
     </div>
@@ -23,7 +20,7 @@
                 {{ item.failure_reason or 'This video could not be processed because the uploader has restricted access, set the video to private, or disabled captions. No artificial or fabricated notes were generated.' }}
             </div>
             <div style="margin-top: 8px;">
-                <a href="{{ item.video_url }}" target="_blank" style="color: #b91c1c; font-weight: 600;">
+                <a href="{{ item.video_url }}" target="_blank" style="color: var(--color-callout-danger-text); font-weight: 600;">
                     Attempt to open video directly on YouTube &rarr;
                 </a>
             </div>
@@ -32,28 +29,28 @@
         {% set n = item.notes %}
         
         <!-- Executive Summary -->
+        {% if n.executive_summary and n.executive_summary.strip() %}
         <div class="exec-summary-box">
-            <div style="font-weight: 700; color: #0369a1; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px; margin-bottom: 4px;">
-                Executive Summary
-            </div>
+            <div class="exec-summary-title">Executive Summary</div>
             <div>{{ n.executive_summary }}</div>
         </div>
+        {% endif %}
 
         <!-- Comprehensive Theoretical Background & Context -->
-        {% if n.comprehensive_theory_background %}
-        <div class="theory-box no-break">
-            <div style="font-weight: 700; color: #7e22ce; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.5px; margin-bottom: 4px;">
-                &#128218; Foundational Theory & Architectural Context
+        {% if n.comprehensive_theory_background and n.comprehensive_theory_background.strip()|length > 25 %}
+        <div class="theory-box">
+            <div style="font-weight: 700; color: var(--color-accent); text-transform: uppercase; font-size: 8pt; letter-spacing: 0.8px; margin-bottom: 6px;">
+                Foundational Theory & Architectural Context
             </div>
-            <div>{{ n.comprehensive_theory_background | markdown | safe }}</div>
+            <div class="block-body">{{ n.comprehensive_theory_background | markdown | safe }}</div>
         </div>
         {% endif %}
 
         <!-- Key Takeaways -->
-        {% if n.key_takeaways %}
+        {% if n.key_takeaways and n.key_takeaways|length > 0 %}
         <div class="no-break" style="margin: 16px 0;">
-            <h4 style="font-size: 10pt; color: #0f172a; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px;">Key Takeaways</h4>
-            <ul style="margin: 0; padding-left: 20px; font-size: 9.5pt;">
+            <div style="font-size: 9pt; font-weight: 700; color: var(--color-primary); margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.6px;">Key Takeaways</div>
+            <ul style="margin: 0; padding-left: 18px; font-size: 9.5pt; color: var(--color-primary);">
                 {% for takeaway in n.key_takeaways %}
                     <li style="margin-bottom: 4px;">{{ takeaway }}</li>
                 {% endfor %}
@@ -63,23 +60,23 @@
 
         <!-- Learning Objectives & Prerequisites -->
         {% if n.learning_objectives or n.prerequisites %}
-        <div class="no-break" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; background: #f8fafc; padding: 12px; border-radius: 6px;">
+        <div class="no-break" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; background: var(--color-bg-subtle); padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 4px;">
             {% if n.learning_objectives %}
             <div>
-                <div style="font-weight: 600; font-size: 8.5pt; color: #0369a1; text-transform: uppercase;">Learning Objectives</div>
-                <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 8.5pt;">
+                <div style="font-weight: 700; font-size: 8pt; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.6px;">Learning Objectives</div>
+                <ul style="margin: 4px 0 0 0; padding-left: 14px; font-size: 8.5pt; color: var(--color-primary);">
                     {% for obj in n.learning_objectives %}
-                        <li>{{ obj }}</li>
+                        <li style="margin-bottom: 3px;">{{ obj }}</li>
                     {% endfor %}
                 </ul>
             </div>
             {% endif %}
             {% if n.prerequisites %}
             <div>
-                <div style="font-weight: 600; font-size: 8.5pt; color: #475569; text-transform: uppercase;">Prerequisites</div>
-                <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 8.5pt;">
+                <div style="font-weight: 700; font-size: 8pt; color: var(--color-secondary); text-transform: uppercase; letter-spacing: 0.6px;">Prerequisites</div>
+                <ul style="margin: 4px 0 0 0; padding-left: 14px; font-size: 8.5pt; color: var(--color-primary);">
                     {% for prereq in n.prerequisites %}
-                        <li>{{ prereq }}</li>
+                        <li style="margin-bottom: 3px;">{{ prereq }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -94,38 +91,42 @@
                 <h3 class="section-title">{{ section.title }}</h3>
                 {% if section.timestamped_watch_url %}
                     <a href="{{ section.timestamped_watch_url }}" target="_blank" class="timestamp-link">
-                        &#9658; Watch section @ {{ '%02d:%02d' % (section.timestamp_seconds // 60, section.timestamp_seconds % 60) }}
+                        {% if section.timestamp_seconds is not none %}
+                            Watch @ {{ '%02d:%02d' % (section.timestamp_seconds // 60, section.timestamp_seconds % 60) }} &rarr;
+                        {% else %}
+                            Watch Section &rarr;
+                        {% endif %}
                     </a>
                 {% endif %}
             </div>
 
             <!-- Grounded Video Content -->
-            {% if section.from_video %}
-            <div class="block-grounded">
-                <span class="badge-label badge-grounded-label">&#9658; From the Video (Transcript Grounded)</span>
-                <div>{{ section.from_video | markdown | safe }}</div>
+            {% if section.from_video and section.from_video.strip()|length > 10 %}
+            <div class="content-block content-video">
+                <div class="block-label">From the Video</div>
+                <div class="block-body">{{ section.from_video | markdown | safe }}</div>
             </div>
             {% endif %}
 
             <!-- Supplementary Theory & Architecture -->
-            {% if section.additional_theory %}
-            <div class="block-theory">
-                <span class="badge-label badge-theory-label">&#9881; Additional Theory & Mechanics</span>
-                <div>{{ section.additional_theory | markdown | safe }}</div>
+            {% if section.additional_theory and section.additional_theory.strip()|length > 25 %}
+            <div class="content-block content-theory">
+                <div class="block-label">Supplementary Explanation & Mechanics</div>
+                <div class="block-body">{{ section.additional_theory | markdown | safe }}</div>
             </div>
             {% endif %}
 
-            <!-- If neither specific block, fallback to general markdown content -->
-            {% if not section.from_video and not section.additional_theory %}
-            <div style="font-size: 9.5pt; color: #334155; margin-bottom: 8px;">
+            <!-- Fallback if neither specific block is populated -->
+            {% if (not section.from_video or section.from_video.strip()|length <= 10) and (not section.additional_theory or section.additional_theory.strip()|length <= 25) %}
+            <div class="block-body" style="margin-bottom: 8px;">
                 {{ section.markdown_content | markdown | safe }}
             </div>
             {% endif %}
 
             <!-- Comparison Table (if generated) -->
             {% if section.comparison_table_markdown %}
-            <div class="no-break" style="margin: 10px 0;">
-                <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 4px;">Technical Comparison</div>
+            <div class="no-break" style="margin: 12px 0;">
+                <div style="font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-secondary); margin-bottom: 4px;">Technical Comparison</div>
                 {{ section.comparison_table_markdown | markdown | safe }}
             </div>
             {% endif %}
@@ -135,7 +136,7 @@
             <div class="no-break">
                 <pre><code class="language-{{ snippet.language }}">{{ snippet.code }}</code></pre>
                 {% if snippet.caption %}
-                    <div style="font-size: 7.5pt; color: #64748b; font-style: italic; margin-top: -8px; margin-bottom: 8px;">
+                    <div style="font-size: 7.5pt; color: var(--color-secondary); font-style: italic; margin-top: -6px; margin-bottom: 8px;">
                         Code Reference: {{ snippet.caption }}
                     </div>
                 {% endif %}
@@ -151,12 +152,12 @@
             {% endfor %}
 
             <!-- Citations in Section -->
-            {% if section.cited_sources %}
+            {% if section.cited_sources and section.cited_sources|length > 0 %}
             <div style="margin-top: 8px;">
-                <span style="font-size: 7.5pt; color: #64748b; font-weight: 600;">References:</span>
+                <span style="font-size: 7.5pt; color: var(--color-secondary); font-weight: 600; text-transform: uppercase;">References:</span>
                 {% for src in section.cited_sources %}
                     <a href="{{ src.url }}" target="_blank" class="source-badge">
-                        &#128279; {{ src.title }} ({{ src.domain or 'docs' }})
+                        {{ src.title }} ({{ src.domain or 'ref' }})
                     </a>
                 {% endfor %}
             </div>
@@ -167,8 +168,8 @@
         <!-- Visual / Diagram Asset (Rendered as Vector SVG) -->
         {% if item.visual and item.visual.mermaid_code %}
         <div class="diagram-box">
-            <div style="font-weight: 700; font-size: 10pt; color: #0f172a; margin-bottom: 6px;">{{ item.visual.title }}</div>
-            <div class="mermaid">{{ item.visual.mermaid_code }}</div>
+            <div class="diagram-title">{{ item.visual.title }}</div>
+            <div class="mermaid-canvas">{{ item.visual.mermaid_code | safe }}</div>
             <div class="diagram-caption">{{ item.visual.description }}</div>
         </div>
         {% endif %}
@@ -177,14 +178,14 @@
         {% if n.architecture_and_workflows or n.trade_offs_and_decisions %}
         <div class="no-break" style="margin: 16px 0;">
             {% if n.architecture_and_workflows %}
-                <h4 style="font-size: 9.5pt; color: #0f172a; margin: 8px 0 4px 0;">Architecture & Data Flow</h4>
-                <div style="font-size: 9pt; color: #334155; margin-bottom: 8px;">{{ n.architecture_and_workflows }}</div>
+                <div style="font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-primary); margin: 8px 0 4px 0;">Architecture & Data Flow</div>
+                <div style="font-size: 9.5pt; color: var(--color-primary); margin-bottom: 8px;">{{ n.architecture_and_workflows }}</div>
             {% endif %}
             {% if n.trade_offs_and_decisions %}
-                <h4 style="font-size: 9.5pt; color: #0f172a; margin: 8px 0 4px 0;">Key Design Trade-offs</h4>
-                <ul style="margin: 0; padding-left: 20px; font-size: 9pt; color: #334155;">
+                <div style="font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--color-primary); margin: 8px 0 4px 0;">Key Design Trade-offs</div>
+                <ul style="margin: 0; padding-left: 18px; font-size: 9pt; color: var(--color-primary);">
                     {% for to in n.trade_offs_and_decisions %}
-                        <li>{{ to }}</li>
+                        <li style="margin-bottom: 3px;">{{ to }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -192,9 +193,9 @@
         {% endif %}
 
         <!-- Common Misconceptions -->
-        {% if n.common_misconceptions %}
+        {% if n.common_misconceptions and n.common_misconceptions|length > 0 %}
         <div class="callout callout-warning no-break">
-            <div style="font-weight: 700; margin-bottom: 4px;">&#9888; Common Misconceptions & Clarifications</div>
+            <div style="font-weight: 700; margin-bottom: 4px;">Common Misconceptions & Corrections</div>
             <ul style="margin: 0; padding-left: 18px; font-size: 8.5pt;">
                 {% for misc in n.common_misconceptions %}
                     <li style="margin-bottom: 3px;">{{ misc }}</li>
@@ -204,21 +205,21 @@
         {% endif %}
 
         <!-- Chapter Recap / Revision Sheet -->
-        {% if n.revision_sheet %}
-        <div class="no-break" style="background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-top: 16px; font-size: 8.5pt;">
-            <span style="font-weight: 700; color: #0f172a; text-transform: uppercase; font-size: 8pt;">Chapter Recap: </span>
-            <span style="color: #475569;">{{ n.revision_sheet }}</span>
+        {% if n.revision_sheet and n.revision_sheet.strip() %}
+        <div class="no-break" style="background: var(--color-bg-subtle); border-left: 3px solid var(--color-accent); padding: 10px 14px; border-radius: 0 4px 4px 0; margin-top: 16px; font-size: 8.5pt;">
+            <span style="font-weight: 700; color: var(--color-primary); text-transform: uppercase; font-size: 8pt; letter-spacing: 0.6px;">Chapter Recap: </span>
+            <span style="color: var(--color-secondary);">{{ n.revision_sheet }}</span>
         </div>
         {% endif %}
 
         <!-- Chapter-wide Authoritative Sources -->
-        {% if n.all_sources %}
-        <div class="no-break" style="margin-top: 14px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
-            <div style="font-size: 8pt; font-weight: 700; color: #64748b; text-transform: uppercase;">External Research & Authoritative Documentation</div>
+        {% if n.all_sources and n.all_sources|length > 0 %}
+        <div class="no-break" style="margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--color-border);">
+            <div style="font-size: 7.5pt; font-weight: 700; color: var(--color-secondary); text-transform: uppercase; letter-spacing: 0.8px;">Authoritative Documentation & Specifications</div>
             <div style="margin-top: 4px;">
                 {% for src in n.all_sources %}
                     <a href="{{ src.url }}" target="_blank" class="source-badge">
-                        &#128279; {{ src.title }} ({{ src.domain or 'ref' }})
+                        {{ src.title }} ({{ src.domain or 'ref' }})
                     </a>
                 {% endfor %}
             </div>

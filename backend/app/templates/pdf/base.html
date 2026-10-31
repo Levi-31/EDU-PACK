@@ -2,25 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ playlist.title }} — Playlist Scholar Study Guide</title>
+    <title>{{ playlist.title }} — Playlist Scholar Technical Reference</title>
     <style>
-        {{ css_styles }}
+        {{ css_styles | safe }}
     </style>
     {% if mermaid_js %}
     <script>
-        {{ mermaid_js }}
+        {{ mermaid_js | safe }}
     </script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.mermaid) {
-                window.mermaid.initialize({
-                    startOnLoad: true,
-                    theme: 'neutral',
-                    securityLevel: 'loose',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-                });
-            }
-        });
+        if (window.mermaid) {
+            window.mermaid.parseError = function(err, hash) {
+                // Suppress browser DOM error injection
+            };
+            window.mermaid.initialize({
+                startOnLoad: false,
+                suppressErrorRendering: true,
+                theme: 'base',
+                securityLevel: 'loose',
+                themeVariables: {
+                    primaryColor: '#F5F7F9',
+                    primaryTextColor: '#202B36',
+                    primaryBorderColor: '#D9E0E6',
+                    lineColor: '#5F6B76',
+                    secondaryColor: '#EBF1F5',
+                    tertiaryColor: '#FFFFFF',
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontSize: '11px',
+                    edgeLabelBackground: '#FFFFFF',
+                    clusterBkg: '#FAFBFD',
+                    clusterBorder: '#D9E0E6'
+                }
+            });
+        }
     </script>
     {% endif %}
 </head>

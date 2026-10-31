@@ -51,6 +51,8 @@ services:
       STORAGE_DIR: /app/storage
     volumes:
       - ./storage:/app/storage
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     ports:
       - "8000:8000"
     depends_on:
@@ -81,6 +83,8 @@ services:
       STORAGE_DIR: /app/storage
     volumes:
       - ./storage:/app/storage
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     depends_on:
       backend:
         condition: service_started

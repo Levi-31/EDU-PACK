@@ -129,6 +129,8 @@ async def run_playlist_job(job_id: str):
                 )
 
             if v_item.notes:
+                if v_item.visual and not v_item.notes.visual:
+                    v_item.notes.visual = v_item.visual
                 notes_repo.upsert_notes(
                     job_id=job_id,
                     video_id=v_item.video_id,
