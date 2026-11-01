@@ -5,6 +5,7 @@ from app.db.repositories.transcript_repository import TranscriptRepository
 from app.db.repositories.notes_repository import NotesRepository
 from app.db.repositories.artifact_repository import ArtifactRepository
 from app.db.repositories.event_repository import EventRepository
+from app.db.repositories.research_job_repository import ResearchJobRepository
 
 __all__ = [
     "BaseRepository",
@@ -14,5 +15,6 @@ __all__ = [
     "NotesRepository",
     "ArtifactRepository",
     "EventRepository",
+    "ResearchJobRepository",
 ]
 

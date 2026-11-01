@@ -28,6 +28,9 @@ class PlaylistJob(Base, TimestampMixin):
     error_summary = Column(Text, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     is_mock = Column(Boolean, default=False, nullable=False)
+    source_type = Column(String(50), default="playlist", nullable=False)  # "playlist" or "video"
+    video_id = Column(String(50), nullable=True)
+    pdf_url = Column(String(1000), nullable=True)
 
     # Relationships
     videos = relationship("PlaylistVideo", back_populates="job", cascade="all, delete-orphan", order_by="PlaylistVideo.original_position")

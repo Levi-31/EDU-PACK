@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { StructuredVideoNotes } from '../types';
 import {
   Download,
@@ -11,9 +12,11 @@ import {
   Play,
   Check,
   HelpCircle,
-  FileText
+  FileText,
+  RotateCcw
 } from 'lucide-react';
-import { getDownloadUrl } from '../api/client';
+import { getDownloadUrl, getJobNotes } from '../api/client';
+import { MermaidDiagram } from './MermaidDiagram';
 
 interface NotesViewerProps {
   jobId: string;
@@ -23,17 +26,39 @@ interface NotesViewerProps {
 
 export const NotesViewer: React.FC<NotesViewerProps> = ({
   jobId,
-  notes,
+  notes: initialNotes,
   onBackToDashboard,
 }) => {
+  const {
+    data: fetchedNotes,
+    isLoading: isFetchingNotes,
+    refetch,
+    isRefetching
+  } = useQuery<StructuredVideoNotes[]>({
+    queryKey: ['notes', jobId],
+    queryFn: () => getJobNotes(jobId),
+    initialData: initialNotes && initialNotes.length > 0 ? initialNotes : undefined,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+
+  const notes = (fetchedNotes && fetchedNotes.length > 0) ? fetchedNotes : (initialNotes || []);
+
   const [selectedVideoId, setSelectedVideoId] = useState<string>(
     notes.length > 0 ? notes[0].video_id : ''
   );
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [markdownCopied, setMarkdownCopied] = useState(false);
 
+  useEffect(() => {
+    if (notes.length > 0 && (!selectedVideoId || !notes.some((n) => n.video_id === selectedVideoId))) {
+      setSelectedVideoId(notes[0].video_id);
+    }
+  }, [notes, selectedVideoId]);
+
   const currentIndex = notes.findIndex((n) => n.video_id === selectedVideoId);
   const currentNote = notes[currentIndex >= 0 ? currentIndex : 0];
+  const chapterVisual = currentNote?.visual || currentNote?.sections?.find((s) => s.visual)?.visual;
 
   const handleCopyCode = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
@@ -66,6 +91,18 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
     setTimeout(() => setMarkdownCopied(false), 2000);
   };
 
+  if ((!notes || notes.length === 0) && isFetchingNotes) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
+        <RotateCcw className="w-8 h-8 text-primary animate-spin mx-auto" />
+        <h3 className="text-lg font-semibold text-on-surface">Loading Verified Monograph Notes...</h3>
+        <p className="text-sm text-on-surface-variant font-mono">
+          Fetching synthesized chapters from curriculum database.
+        </p>
+      </div>
+    );
+  }
+
   if (!notes || notes.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
@@ -73,12 +110,21 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
         <p className="text-sm text-on-surface-variant">
           No generated notes could be found for this job.
         </p>
-        <button
-          onClick={onBackToDashboard}
-          className="px-4 py-2 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl text-xs font-medium border border-outline-variant/30"
-        >
-          Return to Generator
-        </button>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-primary-container text-on-primary-container rounded-xl text-xs font-medium shadow-sm hover:opacity-90 flex items-center gap-1.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Retry Loading Notes</span>
+          </button>
+          <button
+            onClick={onBackToDashboard}
+            className="px-4 py-2 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl text-xs font-medium border border-outline-variant/30"
+          >
+            Return to Generator
+          </button>
+        </div>
       </div>
     );
   }
@@ -101,6 +147,15 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            title="Refresh chapters"
+            className="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center gap-1 smooth-transition border border-outline-variant/30 text-xs"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-primary' : ''}`} />
+          </button>
+
           {currentNote?.video_url && (
             <a
               href={currentNote.video_url}
@@ -229,6 +284,19 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Architecture & Flowchart Visual Diagram */}
+              {chapterVisual && (chapterVisual.mermaid_code || chapterVisual.image_url) && (
+                <div className="pt-2">
+                  <MermaidDiagram
+                    mermaidCode={chapterVisual.mermaid_code}
+                    imageUrl={chapterVisual.image_url}
+                    title={chapterVisual.title}
+                    description={chapterVisual.description}
+                    assetType={chapterVisual.asset_type}
+                  />
                 </div>
               )}
 

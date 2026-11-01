@@ -4,57 +4,57 @@
 
 @layer base {
   :root {
-    /* Light Mode Tokens (Stitch Linear Edition) */
-    --surface: 251 248 255;            /* #fbf8ff */
-    --surface-dim: 218 217 227;        /* #dad9e3 */
+    /* Light Mode Tokens — Synthara Minimal Editorial */
+    --surface: 250 250 250;            /* #fafafa clean off-white */
+    --surface-dim: 241 245 249;        /* #f1f5f9 */
     --surface-bright: 255 255 255;     /* #ffffff */
     --surface-lowest: 255 255 255;     /* #ffffff */
-    --surface-low: 244 242 253;        /* #f4f2fd */
-    --surface-container: 238 237 247;  /* #eeedf7 */
-    --surface-high: 232 230 241;       /* #e8e6f1 */
-    --surface-highest: 222 220 230;    /* #dedce6 */
-    --on-surface: 27 27 30;            /* #1b1b1e */
-    --on-surface-variant: 71 70 75;    /* #47464b */
-    --outline: 119 118 123;            /* #77767b */
-    --outline-variant: 199 197 208;    /* #c7c5d0 */
-    --primary: 94 106 210;             /* #5e6ad2 Linear purple */
-    --primary-container: 94 106 210;   /* #5e6ad2 */
+    --surface-low: 248 250 252;        /* #f8fafc */
+    --surface-container: 241 245 249;  /* #f1f5f9 */
+    --surface-high: 232 238 245;       /* #e8eef5 */
+    --surface-highest: 226 232 240;    /* #e2e8f0 */
+    --on-surface: 15 23 42;            /* #0f172a deep charcoal */
+    --on-surface-variant: 71 85 105;   /* #475569 muted slate */
+    --outline: 148 163 184;            /* #94a3b8 */
+    --outline-variant: 226 232 240;    /* #e2e8f0 subtle neutral border */
+    --primary: 79 70 229;              /* #4f46e5 restrained indigo */
+    --primary-container: 79 70 229;    /* #4f46e5 */
     --on-primary: 255 255 255;
     --on-primary-container: 255 255 255;
-    --secondary: 79 82 178;            /* #4f52b2 */
-    --secondary-container: 224 225 255;
-    --tertiary: 2 132 199;             /* #0284c7 */
-    --tertiary-container: 224 242 254;
+    --secondary: 14 116 144;           /* #0e7490 */
+    --secondary-container: 224 242 254;/* #e0f2fe */
+    --tertiary: 16 185 129;            /* #10b981 */
+    --tertiary-container: 209 250 229;
     --on-tertiary: 255 255 255;
-    --error: 186 26 26;
-    --error-container: 255 218 214;
+    --error: 225 29 72;
+    --error-container: 255 228 230;
   }
 
   .dark {
-    /* Dark Mode Tokens (Stitch Linear Dark Edition) */
-    --surface: 18 19 24;               /* #121318 */
-    --surface-dim: 18 19 24;
-    --surface-bright: 56 57 63;        /* #38393f */
-    --surface-lowest: 13 14 19;        /* #0d0e13 */
-    --surface-low: 26 27 33;           /* #1a1b21 */
-    --surface-container: 30 31 37;     /* #1e1f25 */
-    --surface-high: 41 42 47;          /* #292a2f */
-    --surface-highest: 52 52 58;       /* #34343a */
-    --on-surface: 227 225 233;         /* #e3e1e9 */
-    --on-surface-variant: 198 197 213; /* #c6c5d5 */
-    --outline: 144 143 158;            /* #908f9e */
-    --outline-variant: 69 70 82;       /* #454652 */
-    --primary: 189 194 255;            /* #bdc2ff */
-    --primary-container: 94 106 210;   /* #5e6ad2 */
-    --on-primary: 18 31 139;           /* #121f8b */
-    --on-primary-container: 253 250 255; /* #fdfaff */
-    --secondary: 192 193 255;          /* #c0c1ff */
-    --secondary-container: 49 49 192;  /* #3131c0 */
-    --tertiary: 123 208 255;           /* #7bd0ff */
-    --tertiary-container: 0 124 168;   /* #007ca8 */
-    --on-tertiary: 0 53 74;
-    --error: 255 180 171;              /* #ffb4ab */
-    --error-container: 147 0 10;       /* #93000a */
+    /* Dark Mode Tokens — Synthara Deep Slate Workspace */
+    --surface: 11 15 23;               /* #0b0f17 deep near-black */
+    --surface-dim: 11 15 23;
+    --surface-bright: 30 41 59;        /* #1e293b */
+    --surface-lowest: 8 11 18;         /* #080b12 */
+    --surface-low: 15 23 42;           /* #0f172a slate 900 */
+    --surface-container: 23 32 51;     /* #172033 elevated surface */
+    --surface-high: 30 41 59;          /* #1e293b */
+    --surface-highest: 47 63 86;       /* #2f3f56 */
+    --on-surface: 241 245 249;         /* #f1f5f9 off-white */
+    --on-surface-variant: 148 163 184; /* #94a3b8 muted gray */
+    --outline: 100 116 139;            /* #64748b */
+    --outline-variant: 33 45 66;       /* #212d42 dark border */
+    --primary: 129 140 248;            /* #818cf8 refined indigo */
+    --primary-container: 79 70 229;    /* #4f46e5 */
+    --on-primary: 255 255 255;
+    --on-primary-container: 255 255 255;
+    --secondary: 56 189 248;           /* #38bdf8 */
+    --secondary-container: 12 74 110;  /* #0c4a6e */
+    --tertiary: 52 211 153;            /* #34d399 */
+    --tertiary-container: 6 78 59;
+    --on-tertiary: 255 255 255;
+    --error: 251 113 133;
+    --error-container: 136 19 55;
   }
 
   html, body {
@@ -124,4 +124,202 @@
   word-wrap: normal;
   white-space: nowrap;
   direction: ltr;
+}
+
+/* ==========================================================================
+   Editorial Markdown Article Typography
+   Guarantees crisp, high-contrast headings, section hierarchy, and clean reading
+   ========================================================================== */
+
+.markdown-article {
+  color: rgb(var(--on-surface));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.75;
+}
+
+.markdown-article h1 {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.25 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1.25rem !important;
+  color: rgb(var(--on-surface)) !important;
+  border-bottom: 1px solid rgba(var(--outline-variant), 0.35) !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.markdown-article h2 {
+  font-size: 1.625rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin-top: 2.25rem !important;
+  margin-bottom: 0.85rem !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article h3 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.4 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.6rem !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article h4 {
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article p {
+  margin-top: 0 !important;
+  margin-bottom: 1.25rem !important;
+  color: rgb(var(--on-surface-variant)) !important;
+  line-height: 1.85 !important;
+  font-size: 1.0625rem !important;
+}
+
+.markdown-article strong, 
+.markdown-article b {
+  font-weight: 600 !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article em, 
+.markdown-article i {
+  font-style: italic !important;
+}
+
+.markdown-article ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.25rem !important;
+  color: rgb(var(--on-surface-variant)) !important;
+}
+
+.markdown-article ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.25rem !important;
+  color: rgb(var(--on-surface-variant)) !important;
+}
+
+.markdown-article li {
+  margin-bottom: 0.45rem !important;
+  line-height: 1.7 !important;
+}
+
+.markdown-article blockquote {
+  border-left: 3px solid rgb(var(--primary)) !important;
+  background-color: rgba(var(--primary), 0.05) !important;
+  padding: 0.85rem 1.25rem !important;
+  margin: 1.5rem 0 !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article blockquote p {
+  margin: 0 !important;
+  color: inherit !important;
+}
+
+.markdown-article code:not(pre code) {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.875em !important;
+  background-color: rgb(var(--surface-container)) !important;
+  color: rgb(var(--primary)) !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 0.375rem !important;
+  border: 1px solid rgba(var(--outline-variant), 0.3) !important;
+}
+
+.markdown-article pre {
+  background-color: rgb(var(--surface-container-lowest)) !important;
+  border: 1px solid rgba(var(--outline-variant), 0.3) !important;
+  border-radius: 0.75rem !important;
+  padding: 1.25rem !important;
+  overflow-x: auto !important;
+  margin: 1.5rem 0 !important;
+}
+
+.markdown-article pre code {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+  color: rgb(var(--on-surface)) !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.markdown-article img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 880px !important;
+  aspect-ratio: 16 / 9 !important;
+  object-fit: contain !important;
+  background-color: #FFFFFF !important;
+  padding: 0.75rem !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid rgba(var(--outline-variant), 0.3) !important;
+  margin: 2rem auto 0.5rem auto !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+.markdown-article p > em:only-child {
+  display: block !important;
+  text-align: center !important;
+  font-size: 0.825rem !important;
+  color: rgb(var(--outline)) !important;
+  margin-bottom: 1.75rem !important;
+  font-style: normal !important;
+}
+
+.markdown-article table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1.5rem 0 !important;
+  font-size: 0.9rem !important;
+}
+
+.markdown-article th, 
+.markdown-article td {
+  padding: 0.75rem 1rem !important;
+  border: 1px solid rgba(var(--outline-variant), 0.3) !important;
+  text-align: left !important;
+}
+
+.markdown-article th {
+  background-color: rgb(var(--surface-container)) !important;
+  font-weight: 600 !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.markdown-article tr:nth-child(even) {
+  background-color: rgba(var(--surface-container-low), 0.5) !important;
+}
+
+.markdown-article a {
+  color: rgb(var(--primary)) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
+}
+
+.markdown-article a:hover {
+  opacity: 0.85 !important;
+}
+
+.markdown-article hr {
+  border: none !important;
+  border-top: 1px solid rgba(var(--outline-variant), 0.3) !important;
+  margin: 2rem 0 !important;
 }

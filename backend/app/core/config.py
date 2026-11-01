@@ -36,9 +36,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_TEXT_MODEL: str = "gpt-4o-mini"
     OPENAI_REVIEW_MODEL: str = "gpt-4o-mini"
-    OPENAI_IMAGE_MODEL: str = "dall-e-3"
+    OPENAI_IMAGE_MODEL: str = "gpt-image-1-mini"
     OPENAI_MAX_RETRIES: int = 3
-    OPENAI_TIMEOUT_SECONDS: int = 60
+    OPENAI_TIMEOUT_SECONDS: int = 300
     MAX_CONCURRENT_LLM_REQUESTS: int = 3
     ENABLE_IMAGE_GENERATION: bool = True
 
@@ -55,9 +55,25 @@ class Settings(BaseSettings):
     # Demo / Mock Mode
     DEMO_MODE: bool = True
 
+    # Research Module Integration (Levi-31/Research-Tool)
+    ENABLE_RESEARCH_MODULE: bool = True
+    RESEARCH_OPENAI_MODEL: str = "gpt-4o-mini"
+    SEARCH_PROVIDER: str = "tavily"
+    IMAGE_PROVIDER: str = "openai"
+    GOOGLE_API_KEY: str = ""
+    RESEARCH_AS_OF_DATE: str = ""
+
     # Storage
-    STORAGE_BACKEND: str = "local"
+    STORAGE_BACKEND: str = "minio"
     STORAGE_DIR: str = str(ROOT_DIR / "storage")
+
+    # MinIO Object Storage
+    MINIO_ENDPOINT: str = "minio:9000"
+    MINIO_ROOT_USER: str = "minioadmin"
+    MINIO_ROOT_PASSWORD: str = "minioadmin"
+    MINIO_BUCKET_NAME: str = "synthara-storage"
+    MINIO_PUBLIC_URL: str = "http://localhost:9000"
+    MINIO_SECURE: bool = False
 
     # PDF Renderer
     PDF_RENDERER: Literal["playwright", "reportlab"] = "playwright"

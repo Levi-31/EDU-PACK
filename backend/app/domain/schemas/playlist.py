@@ -18,7 +18,7 @@ class PlaylistItemPreview(BaseModel):
 
 
 class PlaylistPreviewRequest(BaseModel):
-    playlist_input: str = Field(description="YouTube playlist ID or full playlist URL")
+    playlist_input: str = Field(description="YouTube video URL, playlist ID or full playlist URL")
 
 
 class PlaylistPreviewResponse(BaseModel):
@@ -32,6 +32,8 @@ class PlaylistPreviewResponse(BaseModel):
     playlist_url: str
     videos: List[PlaylistItemPreview]
     is_mock: bool = False
+    source_type: str = "playlist"  # "video" or "playlist"
+    video_id: Optional[str] = None
 
 
 class GenerationOptions(BaseModel):

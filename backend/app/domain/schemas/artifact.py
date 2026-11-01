@@ -15,5 +15,6 @@ class ArtifactSchema(BaseModel):
     checksum_sha256: str
     created_at: datetime
     download_url: str
+    file_url: Optional[str] = None
     is_valid: bool = True
 

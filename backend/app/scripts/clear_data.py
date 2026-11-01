@@ -2,11 +2,11 @@ import os
 import shutil
 from pathlib import Path
 from app.db.session import SessionLocal
-from app.db.models import PlaylistJob, PlaylistVideo, VideoNotes, VisualAsset, Artifact, JobEvent, Transcript
+from app.db.models import PlaylistJob, PlaylistVideo, VideoNotes, VisualAsset, Artifact, JobEvent, Transcript, ResearchJob
 
 
 def clear_all_data():
-    """Wipes all jobs, videos, notes, visual assets, and artifacts for a fresh test run."""
+    """Wipes all jobs, videos, notes, visual assets, research jobs, and artifacts for a fresh test run."""
     db = SessionLocal()
     try:
         db.query(JobEvent).delete()
@@ -16,6 +16,7 @@ def clear_all_data():
         db.query(Transcript).delete()
         db.query(PlaylistVideo).delete()
         db.query(PlaylistJob).delete()
+        db.query(ResearchJob).delete()
         db.commit()
         print("Database tables cleared successfully.")
     except Exception as e:

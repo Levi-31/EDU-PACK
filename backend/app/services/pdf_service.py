@@ -142,11 +142,7 @@ def clean_technical_title(raw_title: str, playlist_title: Optional[str] = None) 
 
     # 2. Strip playlist/series tags if present
     series_patterns = [
-        r"(?i)\s*\|\s*MCP\s+Trilogy\b",
         r"(?i)\s*\|\s*Mini\s+Playlist\b",
-        r"(?i)\s*\|\s*Agentic\s+AI\s+using\s+LangGraph\b",
-        r"(?i)\s*\|\s*LangGraph\s+Tutorial\b",
-        r"(?i)\s*\|\s*GCP\s+Zero\s+to\s+Hero\b",
         r"(?i)\s*\|\s*Video\s+\d+\b",
         r"(?i)\s*\|\s*Lecture\s+\d+\b",
         r"(?i)^Day[\-\s]*\d+\s*\|\s*",
@@ -155,23 +151,7 @@ def clean_technical_title(raw_title: str, playlist_title: Optional[str] = None) 
     for sp in series_patterns:
         t = re.sub(sp, "", t)
 
-    # 3. Clean up MCP-specific titles cleanly matching standard chapter titles
-    if re.search(r"(?i)\bModel Context Protocol\b", t) and (t.strip() == "Model Context Protocol" or "mini playlist" in raw_title.lower()):
-        t = "Model Context Protocol — Introduction"
-    elif re.search(r"(?i)^Model Context Protocol\s*-\s*The Why$", t):
-        t = "Why Model Context Protocol?"
-    elif "How to connect MCP Servers" in t or "The How | How to connect" in raw_title:
-        t = "Connecting MCP Servers"
-    elif re.search(r"(?i)How to Build Local MCP Servers", t):
-        t = "Building Local MCP Servers"
-    elif re.search(r"(?i)How to Build & Deploy Remote MCP Servers", t) or "Deploying Remote MCP Servers" in t:
-        t = "Deploying Remote MCP Servers"
-    elif re.search(r"(?i)How to build MCP Clients", t):
-        t = "Building MCP Clients"
-    elif "MCP Architecture | Model Context Protocol Architecture" in raw_title:
-        t = "MCP Architecture"
-
-    # 4. Remove duplicate segments separated by pipe (e.g. "MCP Architecture | Model Context Protocol Architecture")
+    # 3. Remove duplicate segments separated by pipe
     parts = [p.strip() for p in t.split("|") if p.strip()]
     if len(parts) > 1:
         first, second = parts[0], parts[1]
@@ -291,13 +271,16 @@ class PDFService:
                     if v.notes.glossary:
                         raw_glossary.extend(v.notes.glossary)
 
-                # Ensure visual asset is extracted from note sections if not directly on item
+                # Ensure visual asset is extracted from item, notes, or sections
                 visual_asset = v.visual
-                if not visual_asset and v.notes and v.notes.sections:
-                    for s in v.notes.sections:
-                        if getattr(s, "visual", None) and getattr(s.visual, "mermaid_code", None):
-                            visual_asset = s.visual
-                            break
+                if not visual_asset and v.notes:
+                    if getattr(v.notes, "visual", None):
+                        visual_asset = v.notes.visual
+                    elif getattr(v.notes, "sections", None):
+                        for s in v.notes.sections:
+                            if getattr(s, "visual", None):
+                                visual_asset = s.visual
+                                break
 
                 chapters_data.append({
                     "position": v.original_position,
@@ -336,13 +319,18 @@ class PDFService:
                         "title": playlist_title,
                         "playlist_url": playlist_url,
                         "channel_name": channel_name,
-                        "description": f"Comprehensive technical reference handbook and deep curriculum notes synthesized across {len(sorted_videos)} ordered video lectures."
+                        "description": (
+                            f"Comprehensive technical reference handbook and deep curriculum notes synthesized across {len(sorted_videos)} ordered video lectures."
+                            if len(sorted_videos) > 1 else
+                            f"Standalone technical reference and comprehensive lecture notes synthesized from {playlist_title}."
+                        )
                     },
                     job={"id": job_id},
                     chapters=chapters_data,
                     review_page_number=rev_page_str,
                     completed_count=completed_count,
                     total_count=len(sorted_videos),
+                    is_single_video=(len(sorted_videos) == 1),
                     generation_date=datetime.utcnow().strftime("%B %d, %Y"),
                     consolidated_flashcards=consolidated_flashcards,
                     consolidated_glossary=consolidated_glossary,
@@ -385,6 +373,15 @@ class PDFService:
             if not os.path.exists(abs_path):
                 raise PDFGenerationException("Rendered PDF file does not exist on disk.")
 
+            # Upload to MinIO object storage
+            minio_url = None
+            try:
+                from app.integrations.storage.minio_client import storage_service
+                obj_name = f"notes/{job_id}/{file_name}"
+                minio_url = storage_service.upload_bytes(pdf_bytes, obj_name, content_type="application/pdf")
+            except Exception as ex:
+                logger.warning(f"Could not upload YouTube PDF to MinIO: {ex}")
+
             # 7. Persist to DB
             artifact_id = str(uuid.uuid4())
             db = SessionLocal()
@@ -396,12 +393,20 @@ class PDFService:
                     artifact_type=ArtifactType.PDF_NOTES.value,
                     file_name=file_name,
                     file_path=abs_path,
+                    file_url=minio_url,
                     mime_type="application/pdf",
                     file_size_bytes=file_size,
                     checksum_sha256=checksum,
                     is_valid=True
                 )
                 repo.create(artifact_model)
+
+                # Also update PlaylistJob.pdf_url
+                from app.db.models.job import PlaylistJob
+                job = db.query(PlaylistJob).filter(PlaylistJob.id == job_id).first()
+                if job:
+                    job.pdf_url = minio_url
+                    db.commit()
             finally:
                 db.close()
 
@@ -411,6 +416,7 @@ class PDFService:
                 artifact_type=ArtifactType.PDF_NOTES,
                 file_name=file_name,
                 file_path=abs_path,
+                file_url=minio_url,
                 mime_type="application/pdf",
                 file_size_bytes=file_size,
                 checksum_sha256=checksum,

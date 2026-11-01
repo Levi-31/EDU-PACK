@@ -7,9 +7,10 @@ from app.domain.schemas.artifact import ArtifactSchema
 
 
 class CreateJobRequest(BaseModel):
-    playlist_input: str = Field(description="YouTube playlist ID or full URL")
+    playlist_input: str = Field(description="YouTube video URL, playlist ID or full playlist URL")
     options: Optional[GenerationOptions] = Field(default_factory=GenerationOptions)
     title_override: Optional[str] = None
+    selected_video_ids: Optional[List[str]] = Field(default=None, description="Optional list of specific video IDs to include. If omitted or empty, all videos in the playlist are included.")
 
 
 class VideoStatusSchema(BaseModel):
@@ -55,8 +56,11 @@ class JobDetailResponse(BaseModel):
     updated_at: datetime
     completed_at: Optional[datetime] = None
     artifact: Optional[ArtifactSchema] = None
+    pdf_url: Optional[str] = None
     videos: List[VideoStatusSchema] = Field(default_factory=list)
     is_mock: bool = False
+    source_type: str = "playlist"  # "video" or "playlist"
+    video_id: Optional[str] = None
 
 
 class JobListResponse(BaseModel):

@@ -1,10 +1,16 @@
 <div class="cover-container">
     <div>
-        <div class="cover-badge">Technical Reference Handbook & Curriculum Notes</div>
+        {% if is_single_video %}
+            <div class="cover-badge">Technical Reference & Lecture Notes</div>
+        {% else %}
+            <div class="cover-badge">Technical Reference Handbook & Curriculum Notes</div>
+        {% endif %}
         <h1 class="cover-title">{{ playlist.title }}</h1>
         <div class="cover-subtitle">
             {% if playlist.description %}
                 {{ playlist.description[:280] }}{% if playlist.description|length > 280 %}...{% endif %}
+            {% elif is_single_video %}
+                Standalone technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by Playlist Scholar.
             {% else %}
                 Comprehensive technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by Playlist Scholar.
             {% endif %}
@@ -14,15 +20,26 @@
     <div>
         <div style="margin-bottom: 24px;">
             <a href="{{ playlist.playlist_url }}" target="_blank" style="color: var(--color-accent); font-size: 9pt; font-weight: 600; text-decoration: none;">
-                View Original YouTube Playlist &rarr;
+                {% if is_single_video %}View Original YouTube Video &rarr;{% else %}View Original YouTube Playlist &rarr;{% endif %}
             </a>
         </div>
 
         <div class="cover-meta cover-metadata">
+            {% if is_single_video %}
+            <div>
+                <div class="cover-meta-item-label meta-label">Creator / Channel</div>
+                <div class="cover-meta-item-val meta-val">{{ playlist.channel_name or "YouTube Creator" }}</div>
+            </div>
+            <div>
+                <div class="cover-meta-item-label meta-label">Lecture Format</div>
+                <div class="cover-meta-item-val meta-val">Standalone Video Masterclass</div>
+            </div>
+            {% else %}
             <div>
                 <div class="cover-meta-item-label meta-label">Curriculum Scope</div>
                 <div class="cover-meta-item-val meta-val">{{ completed_count }} of {{ total_count }} Lectures Synthesized</div>
             </div>
+            {% endif %}
             <div>
                 <div class="cover-meta-item-label meta-label">Publication Date</div>
                 <div class="cover-meta-item-val meta-val">{{ generation_date }}</div>

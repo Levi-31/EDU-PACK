@@ -13,6 +13,7 @@ class Artifact(Base, TimestampMixin):
     artifact_type = Column(String(50), nullable=False, default="pdf_notes")
     file_name = Column(String(255), nullable=False)
     file_path = Column(String(1000), nullable=False)
+    file_url = Column(String(1000), nullable=True)
     mime_type = Column(String(100), default="application/pdf", nullable=False)
     file_size_bytes = Column(Integer, default=0, nullable=False)
     checksum_sha256 = Column(String(64), nullable=False)
