@@ -4,6 +4,8 @@ from typing import Optional
 from app.core.config import settings
 from app.domain.enums import JobStatus, VideoProcessingStatus, TranscriptStatus
 from app.domain.schemas.playlist import GenerationOptions
+from app.domain.schemas.notes import StructuredVideoNotes
+from app.domain.schemas.transcript import TranscriptData, TranscriptSegment
 from app.agents.state import PlaylistGraphState, VideoGraphItem
 from app.agents.graph import PlaylistWorkflowOrchestrator
 from app.integrations.transcripts.youtube_transcript import YouTubeTranscriptProvider
@@ -45,20 +47,46 @@ async def run_playlist_job(job_id: str):
 
         # Prepare Graph State
         options = GenerationOptions(**job.options)
-        video_items = [
-            VideoGraphItem(
-                video_id=v.video_id,
-                original_position=v.original_position,
-                title=v.title,
-                channel_title=v.channel_title,
-                description=v.description,
-                duration_seconds=v.duration_seconds,
-                thumbnail_url=v.thumbnail_url,
-                video_url=v.video_url,
-                is_available=(v.processing_status != "SKIPPED")
+        video_items = []
+        for v in videos:
+            existing_transcript = None
+            db_transcript = transcript_repo.get_by_job_and_video(job_id, v.video_id)
+            if db_transcript and db_transcript.segments_json:
+                try:
+                    existing_transcript = TranscriptData(
+                        video_id=v.video_id,
+                        language=db_transcript.language or "en",
+                        source=db_transcript.source or "youtube",
+                        status=TranscriptStatus(db_transcript.status) if db_transcript.status in [s.value for s in TranscriptStatus] else TranscriptStatus.FETCHED,
+                        segments=[TranscriptSegment(**s) for s in db_transcript.segments_json]
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not reconstruct transcript for {v.video_id}: {e}")
+
+            existing_notes = None
+            db_notes = notes_repo.get_by_job_and_video(job_id, v.video_id)
+            if db_notes and db_notes.notes_json:
+                try:
+                    existing_notes = StructuredVideoNotes(**db_notes.notes_json)
+                except Exception as e:
+                    logger.warning(f"Could not reconstruct notes for {v.video_id}: {e}")
+
+            video_items.append(
+                VideoGraphItem(
+                    video_id=v.video_id,
+                    original_position=v.original_position,
+                    title=v.title,
+                    channel_title=v.channel_title,
+                    description=v.description,
+                    duration_seconds=v.duration_seconds,
+                    thumbnail_url=v.thumbnail_url,
+                    video_url=v.video_url,
+                    is_available=(v.processing_status != "SKIPPED"),
+                    status=VideoProcessingStatus.COMPLETED if existing_notes else VideoProcessingStatus.PENDING,
+                    transcript=existing_transcript,
+                    notes=existing_notes
+                )
             )
-            for v in videos
-        ]
 
         initial_state = PlaylistGraphState(
             job_id=job_id,
@@ -171,6 +199,15 @@ async def run_playlist_job(job_id: str):
             failed_videos=failed_count,
             skipped_videos=skipped_count
         )
+        db.commit()
+
+        # Emit final terminal completion event only AFTER database state is fully committed
+        await event_bus.publish(
+            job_id=job_id,
+            stage=final_job_status.value,
+            message=f"Compilation complete: {completed_count}/{len(final_state.videos)} video chapters generated. PDF ready for download.",
+            progress=100.0
+        )
 
     except Exception as e:
         logger.error(f"Fatal error in run_playlist_job {job_id}: {e}", exc_info=True)
@@ -190,3 +227,19 @@ async def run_playlist_job(job_id: str):
         )
     finally:
         db.close()
+
+
+def run_research_job(job_id: str):
+    """
+    Executes the complete Levi-31/Research-Tool LangGraph workflow for a given job_id.
+    """
+    db = SessionLocal()
+    try:
+        from app.modules.research.research_service import ResearchService
+        service = ResearchService(db)
+        service.execute_job_sync(job_id)
+    except Exception as e:
+        logger.error(f"Fatal error executing research job {job_id}: {e}", exc_info=True)
+    finally:
+        db.close()
+

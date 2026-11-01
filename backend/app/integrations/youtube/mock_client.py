@@ -13,10 +13,24 @@ class MockYouTubeClient(YouTubeClientInterface):
 
     DEFAULT_PLAYLIST_ID = "PL_DISTRIBUTED_SYSTEMS_2026"
 
+    STANDALONE_VIDEOS = [
+        {
+            "video_id": "fMHGSx8B9gs",
+            "title": "ChatGPT isn't Magic: The Simplest LLM Explanation Ever",
+            "channel_title": "codestorywithMIK",
+            "description": "Comprehensive explanation of large language model architecture, transformers, embeddings, and attention mechanisms.",
+            "thumbnail_url": "https://i.ytimg.com/vi/fMHGSx8B9gs/hqdefault.jpg",
+            "duration_seconds": 331,
+            "is_available": True,
+            "status_note": None
+        }
+    ]
+
     SAMPLE_VIDEOS = [
         {
             "video_id": "vid_dist_001",
             "title": "1. Distributed Consensus: Paxos, Raft, and State Machine Replication",
+
             "channel_title": "MIT Distributed Systems Lab",
             "description": "Comprehensive technical lecture examining distributed consensus protocols, quorum slices, leader election, log replication, and split-brain recovery.",
             "thumbnail_url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop",
@@ -95,7 +109,56 @@ class MockYouTubeClient(YouTubeClientInterface):
             available_videos_count=available_count,
             playlist_url=construct_playlist_url(playlist_id),
             videos=videos,
-            is_mock=True
+            is_mock=True,
+            source_type="playlist"
+        )
+
+    async def fetch_video(self, video_input: str) -> PlaylistPreviewResponse:
+        from app.integrations.youtube.parser import parse_youtube_target
+        target = parse_youtube_target(video_input)
+        video_id = target.video_id or target.target_id
+
+        all_videos = self.STANDALONE_VIDEOS + self.SAMPLE_VIDEOS
+        match = next((v for v in all_videos if v["video_id"] == video_id), None)
+        if not match:
+            match = {
+                "video_id": video_id,
+                "title": f"Technical Lecture: {video_id}",
+                "channel_title": "MIT Distributed Systems Lab",
+                "description": f"Comprehensive technical lecture on systems architecture, performance tuning, and engineering design patterns for {video_id}.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop",
+                "duration_seconds": 1200,
+                "is_available": True,
+                "status_note": None
+            }
+
+        item = PlaylistItemPreview(
+            video_id=match["video_id"],
+            original_position=0,
+            title=match["title"],
+            channel_title=match["channel_title"],
+            description=match["description"],
+            thumbnail_url=match["thumbnail_url"],
+            duration_seconds=match["duration_seconds"],
+            duration_formatted=format_duration(match["duration_seconds"]),
+            video_url=construct_video_url(match["video_id"]),
+            is_available=match["is_available"],
+            status_note=match["status_note"]
+        )
+
+        return PlaylistPreviewResponse(
+            playlist_id=f"video_{video_id}",
+            title=match["title"],
+            description=match["description"],
+            channel_name=match["channel_title"],
+            thumbnail_url=match["thumbnail_url"],
+            total_videos=1,
+            available_videos_count=1 if match["is_available"] else 0,
+            playlist_url=construct_video_url(match["video_id"]),
+            videos=[item],
+            is_mock=True,
+            source_type="video",
+            video_id=video_id
         )
 
     def _build_paginated_playlist(self, playlist_id: str) -> PlaylistPreviewResponse:
@@ -129,6 +192,55 @@ class MockYouTubeClient(YouTubeClientInterface):
             available_videos_count=len(videos),
             playlist_url=construct_playlist_url(playlist_id),
             videos=videos,
-            is_mock=True
+            is_mock=True,
+            source_type="playlist"
+        )
+
+    async def fetch_video(self, video_input: str) -> PlaylistPreviewResponse:
+        from app.integrations.youtube.parser import parse_youtube_target
+        target = parse_youtube_target(video_input)
+        video_id = target.video_id or target.target_id
+
+        all_videos = self.STANDALONE_VIDEOS + self.SAMPLE_VIDEOS
+        match = next((v for v in all_videos if v["video_id"] == video_id), None)
+        if not match:
+            match = {
+                "video_id": video_id,
+                "title": f"Technical Lecture: {video_id}",
+                "channel_title": "MIT Distributed Systems Lab",
+                "description": f"Comprehensive technical lecture on systems architecture, performance tuning, and engineering design patterns for {video_id}.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop",
+                "duration_seconds": 1200,
+                "is_available": True,
+                "status_note": None
+            }
+
+        item = PlaylistItemPreview(
+            video_id=match["video_id"],
+            original_position=0,
+            title=match["title"],
+            channel_title=match["channel_title"],
+            description=match["description"],
+            thumbnail_url=match["thumbnail_url"],
+            duration_seconds=match["duration_seconds"],
+            duration_formatted=format_duration(match["duration_seconds"]),
+            video_url=construct_video_url(match["video_id"]),
+            is_available=match["is_available"],
+            status_note=match["status_note"]
+        )
+
+        return PlaylistPreviewResponse(
+            playlist_id=f"video_{video_id}",
+            title=match["title"],
+            description=match["description"],
+            channel_name=match["channel_title"],
+            thumbnail_url=match["thumbnail_url"],
+            total_videos=1,
+            available_videos_count=1 if match["is_available"] else 0,
+            playlist_url=construct_video_url(match["video_id"]),
+            videos=[item],
+            is_mock=True,
+            source_type="video",
+            video_id=video_id
         )
 

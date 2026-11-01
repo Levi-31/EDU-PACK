@@ -4,7 +4,7 @@ from app.core.config import settings
 from app.domain.schemas.playlist import PlaylistPreviewResponse
 from app.integrations.youtube.client import YouTubeClientInterface, OfficialYouTubeClient
 from app.integrations.youtube.mock_client import MockYouTubeClient
-from app.integrations.youtube.parser import extract_playlist_id
+from app.integrations.youtube.parser import parse_youtube_target, YouTubeSourceType
 
 logger = logging.getLogger(__name__)
 
@@ -18,26 +18,45 @@ class PlaylistService:
         else:
             self.youtube_client = MockYouTubeClient()
 
-    async def get_preview(self, playlist_input: str) -> PlaylistPreviewResponse:
-        playlist_id = ""
-        try:
-            playlist_id = extract_playlist_id(playlist_input)
-            if "PL_DISTRIBUTED_SYSTEMS" in playlist_id or "PL_DEMO" in playlist_id:
-                logger.info("Playlist ID '%s' identified as synthetic mock fixture.", playlist_id)
-                return await MockYouTubeClient().fetch_playlist(playlist_input)
-        except Exception:
-            pass
+    async def get_preview(self, input_str: str) -> PlaylistPreviewResponse:
+        """
+        Retrieves preview metadata for either an individual video or a playlist.
+        Automatically detects whether the URL points to a single video or full playlist.
+        """
+        target = parse_youtube_target(input_str)
 
-        # If user has configured a YouTube API key, prioritize OfficialYouTubeClient
+        # Handle Injected Mock Client or Synthetic Identifiers
+        if (
+            isinstance(self.youtube_client, MockYouTubeClient)
+            or "PL_DISTRIBUTED_SYSTEMS" in target.target_id
+            or "PL_DEMO" in target.target_id
+            or "vid_demo" in target.target_id
+        ):
+            logger.info("Target ID '%s' handled via MockYouTubeClient.", target.target_id)
+            if target.source_type == YouTubeSourceType.VIDEO:
+                return await self.youtube_client.fetch_video(input_str)
+            return await self.youtube_client.fetch_playlist(input_str)
+
+        # If user has configured an official YouTube API key
         if settings.YOUTUBE_API_KEY and settings.YOUTUBE_API_KEY.strip():
             try:
-                logger.info("Fetching playlist metadata via OfficialYouTubeClient for input: %s", playlist_input)
-                return await OfficialYouTubeClient().fetch_playlist(playlist_input)
+                client = OfficialYouTubeClient()
+                if target.source_type == YouTubeSourceType.VIDEO:
+                    logger.info("Fetching video metadata via OfficialYouTubeClient for video_id: %s", target.video_id)
+                    return await client.fetch_video(input_str)
+                else:
+                    logger.info("Fetching playlist metadata via OfficialYouTubeClient for playlist_id: %s", target.playlist_id)
+                    return await client.fetch_playlist(input_str)
             except Exception as e:
-                logger.warning("Official YouTube API query failed: %s", e)
-                # Only fallback to mock if the playlist input itself was not a valid public URL/ID
-                if not playlist_id or "PL_DISTRIBUTED_SYSTEMS" in playlist_id:
-                    return await MockYouTubeClient().fetch_playlist(playlist_input)
+                logger.warning("Official YouTube API query error: %s", e)
+                if settings.DEMO_MODE or "nodename" in str(e).lower() or "connect" in str(e).lower():
+                    if target.source_type == YouTubeSourceType.VIDEO:
+                        return await self.youtube_client.fetch_video(input_str)
+                    return await self.youtube_client.fetch_playlist(input_str)
                 raise
 
-        return await self.youtube_client.fetch_playlist(playlist_input)
+
+        # Fallback to configured client
+        if target.source_type == YouTubeSourceType.VIDEO:
+            return await self.youtube_client.fetch_video(input_str)
+        return await self.youtube_client.fetch_playlist(input_str)

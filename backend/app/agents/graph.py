@@ -109,6 +109,11 @@ class PlaylistWorkflowOrchestrator:
             item.failure_reason = item.failure_reason or "Video is private, deleted, or unavailable on YouTube."
             return item
 
+        if item.notes:
+            logger.info(f"Video {pos}/{len(state.videos)} already has synthesized notes. Preserving existing notes.")
+            item.status = VideoProcessingStatus.COMPLETED
+            return item
+
         video_meta = {
             "video_id": vid,
             "title": item.title,
@@ -120,21 +125,25 @@ class PlaylistWorkflowOrchestrator:
         }
 
         try:
-            # 1. Retrieve Transcript
-            item.status = VideoProcessingStatus.FETCHING_TRANSCRIPT
-            await self._emit_event(
-                job_id=state.job_id,
-                stage="FETCHING_TRANSCRIPTS",
-                message=f"Acquiring transcript for [{pos}/{len(state.videos)}] '{item.title[:40]}...'",
-                progress=state.overall_progress,
-                video_id=vid
-            )
+            # 1. Retrieve Transcript (reusing cached transcript if available)
+            if item.transcript and item.transcript.segments:
+                transcript = item.transcript
+                logger.info(f"Reusing cached transcript for video {pos}/{len(state.videos)}: {item.title}")
+            else:
+                item.status = VideoProcessingStatus.FETCHING_TRANSCRIPT
+                await self._emit_event(
+                    job_id=state.job_id,
+                    stage="FETCHING_TRANSCRIPTS",
+                    message=f"Acquiring transcript for [{pos}/{len(state.videos)}] '{item.title[:40]}...'",
+                    progress=state.overall_progress,
+                    video_id=vid
+                )
 
-            transcript = await self.transcript_provider.get_transcript(
-                video_id=vid,
-                language=state.options.transcript_language
-            )
-            item.transcript = transcript
+                transcript = await self.transcript_provider.get_transcript(
+                    video_id=vid,
+                    language=state.options.transcript_language
+                )
+                item.transcript = transcript
 
             # Evaluate transcript quality
             is_valid, quality_msg = self.transcript_agent.evaluate_quality(transcript)
@@ -339,16 +348,16 @@ class PlaylistWorkflowOrchestrator:
 
             await self._emit_event(
                 job_id=state.job_id,
-                stage="COMPLETED",
-                message=f"Compilation complete: {completed_notes}/{total} video chapters generated. PDF ready for download.",
-                progress=100.0
+                stage="RENDERING_PDF",
+                message=f"PDF monograph assembled successfully for {completed_notes}/{total} video chapters.",
+                progress=95.0
             )
 
             return {
                 "pdf_artifact_path": artifact.file_path,
                 "pdf_artifact_id": artifact.id,
-                "current_stage": final_status.value,
-                "overall_progress": 100.0
+                "current_stage": "SAVING_RECORDS",
+                "overall_progress": 98.0
             }
         except Exception as e:
             logger.error(f"PDF compilation failed: {e}", exc_info=True)

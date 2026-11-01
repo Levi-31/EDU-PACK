@@ -73,6 +73,8 @@ export interface PlaylistPreviewResponse {
   playlist_url: string;
   videos: PlaylistItemPreview[];
   is_mock: boolean;
+  source_type?: 'playlist' | 'video';
+  video_id?: string;
 }
 
 export interface VideoStatusSchema {
@@ -95,6 +97,7 @@ export interface ArtifactSchema {
   artifact_type: string;
   file_name: string;
   file_path: string;
+  file_url?: string;
   mime_type: string;
   file_size_bytes: number;
   checksum_sha256: string;
@@ -120,9 +123,12 @@ export interface JobDetailResponse {
   created_at: string;
   updated_at: string;
   completed_at?: string;
+  pdf_url?: string;
   artifact?: ArtifactSchema;
   videos: VideoStatusSchema[];
   is_mock: boolean;
+  source_type?: 'playlist' | 'video';
+  video_id?: string;
 }
 
 export interface JobListResponse {
@@ -224,6 +230,95 @@ export interface StructuredVideoNotes {
   glossary: GlossaryItem[];
   revision_sheet: string;
   flashcards: Flashcard[];
+  visual?: VisualAsset;
   all_sources?: ResearchSource[];
   is_mock: boolean;
 }
+
+// ----------------------------------------------------
+// Research Module Types (Levi-31/Research-Tool Integration)
+// ----------------------------------------------------
+
+export type ResearchMode = 'closed_book' | 'hybrid' | 'open_book';
+
+export interface ResearchTask {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface ResearchPlan {
+  title: string;
+  description: string;
+  tasks: ResearchTask[];
+}
+
+export interface ResearchEvidenceItem {
+  url: string;
+  title: string;
+  snippet: string;
+  score?: number;
+  published_date?: string;
+  query?: string;
+}
+
+export interface ResearchRouterDecision {
+  mode: ResearchMode;
+  queries: string[];
+  reasoning: string;
+}
+
+export interface ResearchImageSpec {
+  placeholder: string;
+  kind?: string;
+  prompt: string;
+  style?: string;
+  filename?: string;
+  alt?: string;
+  caption?: string;
+  path?: string;
+  url?: string;
+  success?: boolean;
+}
+
+export interface ResearchJobDetailResponse {
+  id: string;
+  topic: string;
+  as_of?: string;
+  mode: string;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  current_stage: string;
+  progress_percentage: number;
+  router_decision?: ResearchRouterDecision;
+  plan?: ResearchPlan;
+  evidence_items?: ResearchEvidenceItem[];
+  markdown_content?: string;
+  article_title?: string;
+  image_specs?: ResearchImageSpec[];
+  images?: string[];
+  image_urls?: string[];
+  pdf_url?: string;
+  bundle_url?: string;
+  markdown_url?: string;
+  logs?: string[];
+  error_summary?: string;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  markdown_download_url?: string;
+  bundle_download_url?: string;
+  is_mock: boolean;
+}
+
+export interface ResearchJobListResponse {
+  jobs: ResearchJobDetailResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface CreateResearchJobRequest {
+  topic: string;
+  as_of?: string;
+}
+

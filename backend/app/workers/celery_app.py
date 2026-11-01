@@ -25,3 +25,10 @@ def execute_playlist_job(job_id: str):
     from app.workers.tasks import run_playlist_job
     asyncio.run(run_playlist_job(job_id))
 
+
+@celery_app.task(name="tasks.execute_research_job")
+def execute_research_job(job_id: str):
+    from app.workers.tasks import run_research_job
+    run_research_job(job_id)
+
+

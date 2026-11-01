@@ -5,7 +5,13 @@ import httpx
 from app.core.config import settings
 from app.core.exceptions import PlaylistNotFoundException, InvalidPlaylistException
 from app.domain.schemas.playlist import PlaylistItemPreview, PlaylistPreviewResponse
-from app.integrations.youtube.parser import extract_playlist_id, construct_playlist_url, construct_video_url
+from app.integrations.youtube.parser import (
+    extract_playlist_id,
+    construct_playlist_url,
+    construct_video_url,
+    parse_youtube_target,
+    YouTubeSourceType
+)
 
 
 def parse_iso8601_duration(duration_str: str) -> int:
@@ -36,6 +42,10 @@ def format_duration(seconds: int) -> str:
 class YouTubeClientInterface(ABC):
     @abstractmethod
     async def fetch_playlist(self, playlist_input: str) -> PlaylistPreviewResponse:
+        pass
+
+    @abstractmethod
+    async def fetch_video(self, video_input: str) -> PlaylistPreviewResponse:
         pass
 
 
@@ -190,6 +200,72 @@ class OfficialYouTubeClient(YouTubeClientInterface):
                 available_videos_count=available_count,
                 playlist_url=construct_playlist_url(playlist_id),
                 videos=ordered_videos,
-                is_mock=False
+                is_mock=False,
+                source_type="playlist"
+            )
+
+    async def fetch_video(self, video_input: str) -> PlaylistPreviewResponse:
+        target = parse_youtube_target(video_input)
+        video_id = target.video_id or target.target_id
+        if "vid_demo" in video_id or "vid_dist" in video_id:
+            from app.integrations.youtube.mock_client import MockYouTubeClient
+            return await MockYouTubeClient().fetch_video(video_input)
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(
+                f"{self.BASE_URL}/videos",
+                params={
+                    "part": "snippet,contentDetails,status",
+                    "id": video_id,
+                    "key": self.api_key,
+                }
+            )
+            if resp.status_code == 404 or not resp.json().get("items"):
+                raise PlaylistNotFoundException(f"YouTube video '{video_id}' not found or is private/deleted.")
+            if resp.status_code != 200:
+                raise InvalidPlaylistException(f"YouTube API returned error: {resp.text}")
+
+            v_item = resp.json()["items"][0]
+            snippet = v_item.get("snippet", {})
+            title = snippet.get("title", "Untitled Video")
+            description = snippet.get("description", "")
+            channel_name = snippet.get("channelTitle", "")
+            thumbnails = snippet.get("thumbnails", {})
+            thumb_url = (
+                thumbnails.get("maxres", {}).get("url")
+                or thumbnails.get("high", {}).get("url")
+                or thumbnails.get("default", {}).get("url")
+            )
+            iso_dur = v_item.get("contentDetails", {}).get("duration", "")
+            dur_sec = parse_iso8601_duration(iso_dur)
+            dur_fmt = format_duration(dur_sec)
+
+            item = PlaylistItemPreview(
+                video_id=video_id,
+                original_position=0,
+                title=title,
+                channel_title=channel_name,
+                description=description,
+                thumbnail_url=thumb_url,
+                duration_seconds=dur_sec,
+                duration_formatted=dur_fmt,
+                video_url=construct_video_url(video_id),
+                is_available=True,
+                status_note=None
+            )
+
+            return PlaylistPreviewResponse(
+                playlist_id=f"video_{video_id}",
+                title=title,
+                description=description,
+                channel_name=channel_name,
+                thumbnail_url=thumb_url,
+                total_videos=1,
+                available_videos_count=1,
+                playlist_url=construct_video_url(video_id),
+                videos=[item],
+                is_mock=False,
+                source_type="video",
+                video_id=video_id
             )
 

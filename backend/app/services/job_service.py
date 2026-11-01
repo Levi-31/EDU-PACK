@@ -5,7 +5,7 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import JobNotFoundException
+from app.core.exceptions import JobNotFoundException, PlaylistScholarException
 from app.domain.enums import JobStatus, VideoProcessingStatus, TranscriptStatus
 from app.domain.schemas.job import (
     CreateJobRequest,
@@ -41,7 +41,19 @@ class JobService:
         preview = await self.playlist_service.get_preview(request.playlist_input)
         options = request.options or GenerationOptions()
 
+        # Filter videos if selected_video_ids is specified
+        videos_to_process = preview.videos
+        if request.selected_video_ids is not None:
+            selected_set = set(request.selected_video_ids)
+            filtered = [v for v in preview.videos if v.video_id in selected_set]
+            if not filtered:
+                raise PlaylistScholarException("No matching videos selected for generation.", status_code=400)
+            videos_to_process = filtered
+
         # 2. Create PlaylistJob Entity
+        source_type = getattr(preview, "source_type", "playlist")
+        video_id = getattr(preview, "video_id", None) if source_type == "video" else None
+
         job = PlaylistJob(
             playlist_id=preview.playlist_id,
             playlist_url=preview.playlist_url,
@@ -51,14 +63,16 @@ class JobService:
             current_stage="QUEUED",
             progress_percentage=0.0,
             options=options.model_dump(),
-            total_videos=len(preview.videos),
-            is_mock=preview.is_mock
+            total_videos=len(videos_to_process),
+            is_mock=preview.is_mock,
+            source_type=source_type,
+            video_id=video_id
         )
         try:
             created_job = self.job_repo.create(job)
 
             # 3. Create PlaylistVideo Entities in original position
-            for v in preview.videos:
+            for v in videos_to_process:
                 status = VideoProcessingStatus.PENDING if v.is_available else VideoProcessingStatus.SKIPPED
                 video_entity = PlaylistVideo(
                     job_id=created_job.id,
@@ -104,6 +118,10 @@ class JobService:
         for v in videos:
             has_notes = self.notes_repo.get_by_job_and_video(job_id, v.video_id) is not None
             dur_fmt = f"{v.duration_seconds // 60}:{v.duration_seconds % 60:02d}" if v.duration_seconds else "--:--"
+            v_status = VideoProcessingStatus(v.processing_status)
+            if has_notes and v_status in [VideoProcessingStatus.PENDING, VideoProcessingStatus.ANALYZING_TOPICS, VideoProcessingStatus.RESEARCHING, VideoProcessingStatus.GENERATING_NOTES, VideoProcessingStatus.REVIEWING]:
+                v_status = VideoProcessingStatus.COMPLETED
+
             video_schemas.append(
                 VideoStatusSchema(
                     video_id=v.video_id,
@@ -112,13 +130,16 @@ class JobService:
                     channel_title=v.channel_title,
                     thumbnail_url=v.thumbnail_url,
                     duration_formatted=dur_fmt,
-                    status=VideoProcessingStatus(v.processing_status),
+                    status=v_status,
                     transcript_status=TranscriptStatus(v.transcript_status),
                     error_message=v.failure_reason,
                     has_notes=has_notes,
                     has_visual=False
                 )
             )
+
+        actual_completed = sum(1 for vs in video_schemas if vs.has_notes or vs.status == VideoProcessingStatus.COMPLETED)
+        effective_completed = max(job.completed_videos, actual_completed)
 
         # Artifact lookup
         artifact = self.artifact_repo.get_by_job_id(job_id)
@@ -148,7 +169,7 @@ class JobService:
             current_stage=job.current_stage,
             options=GenerationOptions(**job.options),
             total_videos=job.total_videos,
-            completed_videos=job.completed_videos,
+            completed_videos=effective_completed,
             failed_videos=job.failed_videos,
             skipped_videos=job.skipped_videos,
             error_summary=job.error_summary,
@@ -156,8 +177,11 @@ class JobService:
             updated_at=job.updated_at,
             completed_at=job.completed_at,
             artifact=artifact_schema,
+            pdf_url=job.pdf_url or (artifact_schema.file_url if artifact_schema else None),
             videos=video_schemas,
-            is_mock=job.is_mock
+            is_mock=job.is_mock,
+            source_type=getattr(job, "source_type", "playlist"),
+            video_id=getattr(job, "video_id", None)
         )
 
     def list_jobs(self, page: int = 1, page_size: int = 20) -> JobListResponse:

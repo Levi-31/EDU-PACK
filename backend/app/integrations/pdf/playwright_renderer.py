@@ -66,15 +66,14 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
                                 let text = raw.trim();
                                 // Strip fences if present
                                 text = text.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/i, '').trim();
-                                // Newline after declaration
-                                text = text.replace(/^(flowchart\s+[a-z]{2}|graph\s+[a-z]{2})\s*;?\s+([^\n]+)$/im, '$1\\n    $2');
-                                // Split joined statements
-                                text = text.replace(/(\]|\)|\})\s+([A-Za-z0-9_]+\s*(?:-->|---|-.->|==>|->>|\[|\())/g, '$1\\n    $2');
-                                text = text.replace(/(\]|\)|\})\s+(subgraph\b)/gi, '$1\\n$2');
-                                text = text.replace(/\bend\s+([A-Za-z0-9_]+\b)/gi, 'end\\n    $1');
-                                text = text.replace(/\bend\s+(subgraph\b)/gi, 'end\\n$1');
+                                // Newline after declaration using functional replacement to prevent escaping bugs
+                                text = text.replace(/^(flowchart\s+[a-z]{2}|graph\s+[a-z]{2})\s*;?\s+([^\n]+)$/im, function(m, p1, p2) {
+                                    return p1 + '\n    ' + p2;
+                                });
                                 // Fix isolated single dash arrows -> to -->
                                 text = text.replace(/(?<![-=.])->(?!>)/g, '-->');
+                                // Fix invalid -->> in flowcharts to standard -->
+                                text = text.replace(/-->>/g, '-->');
                                 // Clean trailing semicolons
                                 text = text.replace(/;\s*$/gm, '');
                                 text = text.replace(/\bend\s*;/gi, 'end');
@@ -112,10 +111,11 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
                             });
                             document.querySelectorAll('.diagram-box').forEach(box => {
                                 const svg = box.querySelector('svg');
+                                const img = box.querySelector('img');
                                 const hasError = box.textContent.includes('Syntax error in text') || 
                                                  box.textContent.includes('mermaid version') ||
                                                  (svg && svg.getAttribute('aria-roledescription') === 'error') ||
-                                                 !svg;
+                                                 (!svg && !img);
                                 if (hasError) {
                                     box.remove();
                                 }

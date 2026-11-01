@@ -158,15 +158,21 @@ export const JobProgress: React.FC<JobProgressProps> = ({
         {/* Videos Progress List (7 cols) */}
         <div className="md:col-span-7 space-y-2">
           <div className="flex items-center justify-between px-1 text-xs text-outline font-mono">
-            <span>CURRICULUM QUEUE ({job.completed_videos} / {job.total_videos} DONE)</span>
+            <span>
+              CURRICULUM QUEUE ({
+                (isCompleted && job.completed_videos === 0 && job.videos?.length > 0)
+                  ? (job.videos.filter((v) => v.has_notes || v.status === 'COMPLETED').length || job.total_videos)
+                  : job.completed_videos
+              } / {job.total_videos} DONE)
+            </span>
           </div>
 
           <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
             {job.videos && job.videos.length > 0 ? (
               job.videos.map((vid, idx) => {
-                const isVidDone = vid.status === 'COMPLETED';
-                const isVidProc = vid.status !== 'COMPLETED' && vid.status !== 'FAILED' && vid.status !== 'SKIPPED' && vid.status !== 'PENDING';
+                const isVidDone = vid.status === 'COMPLETED' || vid.has_notes || (isCompleted && vid.status !== 'FAILED' && vid.status !== 'SKIPPED');
                 const isVidFail = vid.status === 'FAILED' || vid.status === 'TRANSCRIPT_FAILED';
+                const isVidProc = !isVidDone && !isVidFail && vid.status !== 'SKIPPED' && vid.status !== 'PENDING';
 
                 return (
                   <div

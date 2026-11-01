@@ -6,6 +6,7 @@ from app.db.models.notes import VideoNotes
 from app.db.models.visual import VisualAsset
 from app.db.models.artifact import Artifact
 from app.db.models.event import JobEvent
+from app.db.models.research_job import ResearchJob
 
 __all__ = [
     "Base",
@@ -17,5 +18,6 @@ __all__ = [
     "VisualAsset",
     "Artifact",
     "JobEvent",
+    "ResearchJob",
 ]
 

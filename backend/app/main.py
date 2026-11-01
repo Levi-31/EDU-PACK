@@ -12,6 +12,8 @@ from app.api.v1.playlists import router as playlists_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.notes import router as notes_router
 from app.api.v1.artifacts import router as artifacts_router
+from app.api.v1.research import router as research_router
+
 
 setup_logging(settings.LOG_LEVEL)
 logger = logging.getLogger("playlist_scholar")
@@ -68,6 +70,12 @@ app.include_router(playlists_router, prefix=api_v1_prefix)
 app.include_router(jobs_router, prefix=api_v1_prefix)
 app.include_router(notes_router, prefix=api_v1_prefix)
 app.include_router(artifacts_router, prefix=api_v1_prefix)
+app.include_router(research_router, prefix=api_v1_prefix)
+
+# YouTube aliases for clean dual-mode API surface
+app.include_router(playlists_router, prefix=f"{api_v1_prefix}/youtube")
+app.include_router(jobs_router, prefix=f"{api_v1_prefix}/youtube")
+
 
 
 if __name__ == "__main__":

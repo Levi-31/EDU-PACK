@@ -82,9 +82,10 @@ class OfficialOpenAIClient(OpenAIClientInterface):
         self.api_key = api_key or settings.OPENAI_API_KEY
         if not self.api_key:
             raise LLMGenerationException("OpenAI API key is missing. Set OPENAI_API_KEY or enable DEMO_MODE.")
+        timeout_val = max(getattr(settings, "OPENAI_TIMEOUT_SECONDS", 300), 180)
         self.client = AsyncOpenAI(
             api_key=self.api_key,
-            timeout=settings.OPENAI_TIMEOUT_SECONDS,
+            timeout=timeout_val,
             max_retries=settings.OPENAI_MAX_RETRIES
         )
 
@@ -102,7 +103,7 @@ class OfficialOpenAIClient(OpenAIClientInterface):
             f"2. For each topic, identify specific learning objectives and prerequisite concepts.\n"
             f"3. Formulate 1-2 targeted search queries per topic to retrieve authoritative external theory (e.g. RFCs, "
             f"official vendor documentation, formal specifications, or underlying algorithms) that will elevate this beyond a simple summary.\n\n"
-            f"TRANSCRIPT EXCERPT:\n{transcript_text[:60000]}\n"
+            f"TRANSCRIPT EXCERPT:\n{transcript_text[:50000]}\n"
         )
         try:
             completion = await self.client.beta.chat.completions.parse(
@@ -120,7 +121,23 @@ class OfficialOpenAIClient(OpenAIClientInterface):
                 return plan
             raise LLMGenerationException("Failed to parse topic plan from OpenAI output.")
         except Exception as e:
-            logger.error(f"Error in generate_topic_plan: {e}")
+            logger.warning(f"Error in generate_topic_plan with {settings.OPENAI_TEXT_MODEL}: {e}. Retrying with gpt-4o-mini fallback...")
+            try:
+                completion = await self.client.beta.chat.completions.parse(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a master curriculum engineer designing advanced technical courses."},
+                        {"role": "user", "content": prompt[:30000]}
+                    ],
+                    response_format=VideoTopicPlan
+                )
+                plan = completion.choices[0].message.parsed
+                if plan:
+                    plan.video_id = video_metadata.get("video_id", "")
+                    plan.video_title = video_metadata.get("title", "")
+                    return plan
+            except Exception as fb_err:
+                logger.error(f"Fallback topic plan also failed: {fb_err}")
             raise LLMGenerationException(f"OpenAI topic plan generation failed: {str(e)}")
 
     async def generate_structured_notes(
@@ -184,7 +201,7 @@ class OfficialOpenAIClient(OpenAIClientInterface):
             f"   - Qualify all numerical claims or comparisons with methodology and dates.\n"
             f"   - In flashcards and revision material: Be precise! For example, do not claim paid cloud accounts have 'no usage limits' (they have quotas, billing thresholds, and project limits).\n"
             f"4. Ground video evidence in provided transcript segment IDs ({[s['id'] for s in evidence_segments[:25]]}).\n\n"
-            f"TRANSCRIPT CONTENT:\n{transcript_text[:120000]}\n"
+            f"TRANSCRIPT CONTENT:\n{transcript_text[:75000]}\n"
         )
 
         try:
@@ -218,6 +235,50 @@ class OfficialOpenAIClient(OpenAIClientInterface):
                 return parsed_notes
             raise LLMGenerationException("Structured output parsing returned None")
         except Exception as e:
+            logger.warning(f"Official OpenAI generate_structured_notes attempt failed ({e}). Attempting fallback with gpt-4o-mini...")
+            try:
+                fallback_prompt = (
+                    f"You are an expert technical instructor and principal software architect.\n"
+                    f"Your job is to turn the video transcript into a complete, self-contained learning resource for: '{video_metadata.get('title')}'.\n\n"
+                    f"TARGET DETAIL LEVEL: {detail_level.upper()} (Target: {word_target})\n\n"
+                    f"{topic_plan_context}\n"
+                    f"{research_context}\n"
+                    f"CORE PEDAGOGICAL DIRECTIVES:\n"
+                    f"1. Expand concepts with foundational theory, internal mechanisms, intermediate reasoning, worked examples, and practical commands.\n"
+                    f"2. REQUIRED TOPIC EXPLANATION STRUCTURE:\n"
+                    f"   For each major topic section, include substantive 'from_video', deep 'additional_theory', and clear 'markdown_content'.\n"
+                    f"3. NEVER include YouTuber salutations, conversational intros, or placeholder text.\n\n"
+                    f"TRANSCRIPT CONTENT:\n{transcript_text[:45000]}\n"
+                )
+                completion = await self.client.beta.chat.completions.parse(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are an expert technical instructor and principal systems engineer writing comprehensive study notes."
+                            )
+                        },
+                        {"role": "user", "content": fallback_prompt}
+                    ],
+                    response_format=StructuredVideoNotes
+                )
+                parsed_notes = completion.choices[0].message.parsed
+                if parsed_notes:
+                    parsed_notes.video_id = video_metadata.get("video_id", "")
+                    parsed_notes.video_title = video_metadata.get("title", "")
+                    parsed_notes.video_url = video_metadata.get("video_url", "")
+                    parsed_notes.channel_name = video_metadata.get("channel_title")
+                    parsed_notes.duration_seconds = video_metadata.get("duration_seconds")
+                    parsed_notes.thumbnail_url = video_metadata.get("thumbnail_url")
+                    parsed_notes.original_position = video_metadata.get("original_position", 0)
+                    parsed_notes.topic_plan = topic_plan
+                    if research_bundle:
+                        parsed_notes.all_sources = research_bundle.sources
+                    logger.info(f"Fallback notes generation succeeded for '{video_metadata.get('title')}'")
+                    return parsed_notes
+            except Exception as fb_err:
+                logger.error(f"Fallback notes generation also failed: {fb_err}")
             logger.error(f"Error in official OpenAI generate_structured_notes: {e}")
             raise LLMGenerationException(f"OpenAI notes generation failed: {str(e)}")
 
@@ -317,38 +378,31 @@ class OfficialOpenAIClient(OpenAIClientInterface):
         notes: StructuredVideoNotes
     ) -> Optional[VisualAssetSchema]:
         prompt = (
-            f"Examine the technical notes for '{notes.video_title}'.\n"
-            f"Decide whether a technical diagram (architecture, sequence, workflow, or component topology) adds genuine pedagogical value.\n"
-            f"If YES, produce clean, valid Mermaid diagram DSL (starting with 'flowchart TD' or 'flowchart LR').\n"
-            f"DIAGRAM ARCHITECTURE GUIDELINES:\n"
-            f"- For cloud & systems concepts, map clear directional relationships and boundaries using subgraphs.\n"
-            f"- For Model Context Protocol (MCP) and distributed systems:\n"
-            f"    * MCP Architecture: Host (Claude Desktop/IDE) <-> MCP Client <-> MCP Server (Tools, Resources, Prompts)\n"
-            f"    * MCP Lifecycle: Initialization (capabilities, version negotiation) -> Operational Phase (tools/call, resources/read) -> Shutdown\n"
-            f"    * MCP Transports: stdio (local subprocess via stdin/stdout) vs SSE/HTTP (remote servers with streaming)\n"
-            f"    * Resource hierarchy & IAM policy inheritance (Org -> Folders -> Projects -> Resources)\n"
-            f"    * Compute Engine & Nginx request flow (Client -> Internet -> Firewall -> VM -> Nginx -> Response)\n"
-            f"    * VPC Networking & Subnets (VPC -> Subnets -> Routes -> Firewall Rules -> Cloud NAT)\n"
-            f"    * Load Balancing & Autoscaling (Traffic -> Cloud Load Balancer -> Instance Group -> Health Checks -> Dynamic Scaling)\n"
-            f"    * Container & Image Lifecycle (Dockerfile -> Build -> Artifact Registry -> GKE/VM Runtime)\n"
-            f"    * Kubernetes / GKE Topology (Control Plane -> Worker Nodes -> Kubelet -> Pods -> Services -> Ingress)\n"
-            f"- RULES & SYNTAX REQUIREMENTS:\n"
-            f"    * ONLY use 'flowchart TD', 'flowchart LR', or 'sequenceDiagram'. NEVER use 'mindmap', 'pie', or unbundled diagram types.\n"
-            f"    * Every statement MUST be on its own separate line. NEVER put multiple statements or subgraphs on one line.\n"
-            f"    * Always use valid Mermaid arrows ('-->', '-.->', '==>'). NEVER use single-dash '->'.\n"
-            f"    * ALWAYS double-quote node labels containing special characters: e.g. A[\"MCP Host (Claude Desktop)\"] --> B[\"MCP Server\"].\n"
-            f"    * Subgraphs MUST have a unique identifier and be closed with 'end' on its own line: e.g.\n"
-            f"        subgraph Storage_Layer [\"Persistence Layer\"]\n"
-            f"            A[\"Primary DB\"]\n"
-            f"        end\n"
-            f"    * NEVER output manual fill styles with saturated colors (NO magenta fill:#ff00ff, neon, or rainbow fills).\n"
-            f"    * Let the global neutral/editorial theme handle typography, lines, and subtle node backgrounds.\n"
-            f"    * NEVER output placeholder text like 'Insert diagram' or 'A diagram could be used here'.\n"
-            f"    * Provide a meaningful title and a 1-2 sentence caption explaining what the diagram illustrates.\n"
-            f"If NO visual is needed, state the reason.\n\n"
-            f"Executive summary: {notes.executive_summary}\n"
-            f"Comprehensive theory: {notes.comprehensive_theory_background}\n"
-            f"Architecture notes: {notes.architecture_and_workflows}\n"
+            f"You are a Senior Technical Architect and Diagram Visualizer.\n"
+            f"Examine the technical lecture notes for '{notes.video_title}'.\n"
+            f"Decide whether a technical diagram (architecture, data flow, pipeline, or component topology) adds genuine pedagogical value.\n\n"
+            f"STRICT CONTENT ACCURACY & RELEVANCE RULES:\n"
+            f"- The diagram MUST be 100% specific and directly derived from the concepts taught in '{notes.video_title}'.\n"
+            f"- NEVER introduce external protocols, architectures, or frameworks that are not explicitly present in the lecture notes.\n"
+            f"- Base all node names, labels, pipelines, and directional relationships exclusively on this video's actual curriculum.\n\n"
+            f"DIAGRAM SYNTAX & FORMATTING REQUIREMENTS:\n"
+            f"- If YES, produce clean, valid Mermaid diagram DSL (starting with 'flowchart TD' or 'flowchart LR').\n"
+            f"- ONLY use 'flowchart TD', 'flowchart LR', or 'sequenceDiagram'. NEVER use 'mindmap', 'pie', or unbundled diagram types.\n"
+            f"- Every statement MUST be on its own separate line. NEVER put multiple statements or subgraphs on one line.\n"
+            f"- Always use valid Mermaid arrows ('-->', '-.->', '==>'). NEVER use single-dash '->' or '-->>'.\n"
+            f"- ALWAYS double-quote node labels containing special characters: e.g. A[\"Component Name\"] --> B[\"Target Component\"].\n"
+            f"- If using subgraphs, each subgraph MUST have a unique identifier and be closed with 'end' on its own line: e.g.\n"
+            f"    subgraph Pipeline_Stage [\"Stage Label\"]\n"
+            f"        A[\"Step 1\"]\n"
+            f"    end\n"
+            f"- NEVER output manual fill styles with saturated colors.\n"
+            f"- NEVER output placeholder text like 'Insert diagram' or 'A diagram could be used here'.\n"
+            f"- Provide an accurate title directly reflecting this lecture's topic, and a 1-2 sentence caption explaining what the diagram illustrates.\n"
+            f"- If NO visual is justified for this lecture, set asset_type to 'none' and mermaid_code to null.\n\n"
+            f"Lecture Title: {notes.video_title}\n"
+            f"Executive Summary: {notes.executive_summary}\n"
+            f"Comprehensive Theory: {notes.comprehensive_theory_background}\n"
+            f"Architecture & Workflows: {notes.architecture_and_workflows}\n"
             f"Sections: {[s.title for s in notes.sections]}\n"
         )
         try:
@@ -358,7 +412,8 @@ class OfficialOpenAIClient(OpenAIClientInterface):
                     {"role": "system", "content": "You are a visual design engineer specializing in Mermaid diagrams for technical architecture and distributed systems."},
                     {"role": "user", "content": prompt}
                 ],
-                response_format=VisualAssetSchema
+                response_format=VisualAssetSchema,
+                max_tokens=2048
             )
             spec = completion.choices[0].message.parsed
             if spec:
@@ -372,12 +427,23 @@ class OfficialOpenAIClient(OpenAIClientInterface):
         if not settings.ENABLE_IMAGE_GENERATION:
             return None
         try:
-            response = await self.client.images.generate(
-                model=settings.OPENAI_IMAGE_MODEL,
-                prompt=f"Minimalist, modern editorial technical illustration: {prompt}",
-                n=1,
-                size="1024x1024"
-            )
+            model = (settings.OPENAI_IMAGE_MODEL or "gpt-image-1-mini").lower()
+            size = "1792x1024" if model == "dall-e-3" else ("1536x1024" if "gpt-image" in model else "1024x1024")
+            try:
+                response = await self.client.images.generate(
+                    model=settings.OPENAI_IMAGE_MODEL,
+                    prompt=f"Minimalist, modern editorial technical illustration with generous boundary margins: {prompt}",
+                    n=1,
+                    size=size
+                )
+            except Exception:
+                # Fallback to standard 1024x1024 if custom landscape size rejected
+                response = await self.client.images.generate(
+                    model=settings.OPENAI_IMAGE_MODEL,
+                    prompt=f"Minimalist, modern editorial technical illustration with generous boundary margins: {prompt}",
+                    n=1,
+                    size="1024x1024"
+                )
             return response.data[0].url
         except Exception as e:
             logger.warning(f"Image generation failed: {e}")
