@@ -9,6 +9,7 @@ import {
   Search,
   PlusCircle
 } from 'lucide-react';
+import { BrandMark, BrandName } from './Brand';
 
 export type AppModule = 'research' | 'youtube';
 export type YouTubeNavTab = 'create' | 'progress' | 'notes' | 'history';
@@ -71,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Main Header Bar */}
         <div className="h-16 flex items-center justify-between gap-4">
-          {/* Brand — Synthara */}
+          {/* Brand — tokens.to.systems */}
           <div
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
             onClick={() => {
@@ -79,15 +80,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               else setResearchTab('landing');
             }}
           >
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary/15 smooth-transition">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 22 12 12 22 2 12" />
-                <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-              </svg>
-            </div>
+            <BrandMark className="w-8 h-8 text-on-surface" />
             <div className="flex flex-col">
-              <span className="font-geist text-xl sm:text-[22px] text-on-surface font-semibold tracking-tight leading-none">
-                Synthara
+              <span className="font-geist text-lg sm:text-[22px] text-on-surface font-semibold tracking-tight leading-none">
+                <BrandName stackOnMobile />
               </span>
               <span className="text-[11px] text-on-surface-variant/80 font-sans tracking-normal hidden md:block">
                 Research &amp; Learning Workspace

@@ -1,4 +1,4 @@
-# Playlist Scholar — Agentic YouTube-to-Technical-Notes Platform
+# tokens.to.systems — Agentic YouTube-to-Technical-Notes Platform
 
 > Turn any YouTube playlist into an in-depth, publication-grade technical study guide and downloadable PDF with verified timestamp links and architectural diagrams.
 
@@ -12,7 +12,7 @@
 
 ## 1. Overview & Capabilities
 
-Playlist Scholar is an autonomous agentic platform engineered for learners, engineers, and researchers. It transforms multi-video YouTube playlists into dense, structured technical notes rather than shallow summaries.
+tokens.to.systems is an autonomous agentic platform engineered for learners, engineers, and researchers. It transforms multi-video YouTube playlists into dense, structured technical notes rather than shallow summaries.
 
 ### Key Capabilities
 - **Strict Playlist Sequence Preservation**: Full pagination support for large playlists. Videos are processed with bounded concurrency but always preserved in their exact original sequence.
@@ -32,7 +32,7 @@ Playlist Scholar is an autonomous agentic platform engineered for learners, engi
 ## 2. Architecture & Tech Stack
 
 ```text
-playlist-scholar/
+tokens.to.systems/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py                  # FastAPI application entrypoint
@@ -71,7 +71,7 @@ playlist-scholar/
 ### Step 1: Clone and Configure Environment
 ```bash
 git clone <repository-url>
-cd playlist-scholar
+cd tokens.to.systems
 
 # Copy environment configuration
 cp .env.example .env
@@ -134,7 +134,7 @@ Access the application at `http://localhost:3000`.
 
 ## 5. Automated Testing
 
-Playlist Scholar includes comprehensive unit tests, integration tests, and critical regression test suites.
+tokens.to.systems includes comprehensive unit tests, integration tests, and critical regression test suites.
 
 ```bash
 # From workspace root

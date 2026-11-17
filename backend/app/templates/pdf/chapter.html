@@ -18,22 +18,10 @@
         </div>
     </div>
 
-    {% if not item.has_notes or not item.is_available %}
-        <div class="unavailable-box">
-            <div style="font-weight: 700; margin-bottom: 4px;">Transcript / Video Inaccessible</div>
-            <div>
-                {{ item.failure_reason or 'This video could not be processed because the uploader has restricted access, set the video to private, or disabled captions. No artificial or fabricated notes were generated.' }}
-            </div>
-            <div style="margin-top: 8px;">
-                <a href="{{ item.video_url }}" target="_blank" style="color: var(--color-callout-danger-text); font-weight: 600;">
-                    Attempt to open video directly on YouTube &rarr;
-                </a>
-            </div>
-        </div>
-    {% else %}
-        {% set n = item.notes %}
-        
-        <!-- Executive Summary -->
+    {% set n = item.notes %}
+    {% if n %}
+    
+    <!-- Executive Summary -->
         {% if n.executive_summary and n.executive_summary.strip() %}
         <div class="exec-summary-box">
             <div class="exec-summary-title">Executive Summary</div>

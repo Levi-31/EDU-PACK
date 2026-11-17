@@ -318,6 +318,51 @@ class PlaylistWorkflowOrchestrator:
     async def _compile_pdf_node(self, state: PlaylistGraphState) -> Dict[str, Any]:
         """Compiles the final PDF document and validates the artifact"""
         logger.info(f"Compiling PDF for job {state.job_id}")
+
+        total_videos = len(state.videos)
+        completed_notes = sum(1 for v in state.videos if v.notes is not None)
+        is_single_video = (total_videos == 1)
+
+        # 1. Single video threshold check: Must have transcript and generated notes
+        if is_single_video and completed_notes == 0:
+            abort_msg = "Transcript is unavailable for this video. PDF generation cannot proceed as captions or transcripts are required."
+            logger.warning(f"Aborting PDF compilation for job {state.job_id}: {abort_msg}")
+            await self._emit_event(
+                job_id=state.job_id,
+                stage="PDF_ABORTED",
+                message=abort_msg,
+                progress=100.0
+            )
+            return {
+                "current_stage": "PDF_ABORTED",
+                "error_summary": abort_msg,
+                "overall_progress": 100.0
+            }
+
+        # 2. Playlist threshold check: At least 50% must have transcripts/notes
+        if not is_single_video:
+            avail_ratio = completed_notes / max(total_videos, 1)
+            if avail_ratio < 0.50:
+                unavailable_count = total_videos - completed_notes
+                avail_pct = round(avail_ratio * 100)
+                abort_msg = (
+                    f"Transcripts are unavailable for the majority of videos in this playlist "
+                    f"({unavailable_count}/{total_videos} unavailable, {avail_pct}% available). "
+                    f"PDF generation has been aborted as at least 50% transcript availability is required."
+                )
+                logger.warning(f"Aborting PDF compilation for job {state.job_id}: {abort_msg}")
+                await self._emit_event(
+                    job_id=state.job_id,
+                    stage="PDF_ABORTED",
+                    message=abort_msg,
+                    progress=100.0
+                )
+                return {
+                    "current_stage": "PDF_ABORTED",
+                    "error_summary": abort_msg,
+                    "overall_progress": 100.0
+                }
+
         await self._emit_event(
             job_id=state.job_id,
             stage="RENDERING_PDF",

@@ -1,8 +1,29 @@
+import re
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.types import Send
+from app.integrations.pdf.renderer import shorten_title
 from app.modules.research.config import llm
 from app.modules.research.prompts import ORCH_SYSTEM
 from app.modules.research.models import State, Plan
+
+LAYOUT_TASK = re.compile(r"\b(cover page|title page|front matter|table of contents|page layout|formatting)\b", re.IGNORECASE)
+WRITER_INSTRUCTION = re.compile(r"^(?:outline|compose|draft|write|prepare)\s+(?:(?:the|a|an)\s+)?", re.IGNORECASE)
+
+
+def _reader_facing_title(title: str) -> str:
+    cleaned = re.sub(r"\s+page$", "", WRITER_INSTRUCTION.sub("", title.strip()), flags=re.IGNORECASE)
+    return (cleaned[:1].upper() + cleaned[1:]) if cleaned else title
+
+
+def normalize_plan(plan: Plan) -> Plan:
+    """Enforces what the planner sometimes ignores: a one-line title, and sections that are content rather than layout chores."""
+    plan.blog_title = shorten_title(plan.blog_title)
+    content_tasks = [task for task in plan.tasks if not LAYOUT_TASK.search(task.title)]
+    plan.tasks = content_tasks or plan.tasks
+    for task in plan.tasks:
+        task.title = _reader_facing_title(task.title)
+    return plan
+
 
 def orchestrator_node(state: State) -> dict:
     """
@@ -31,7 +52,7 @@ def orchestrator_node(state: State) -> dict:
     if forced_kind:
         plan.blog_kind = "news_roundup"
 
-    return {"plan": plan}
+    return {"plan": normalize_plan(plan)}
 
 
 def fanout(state: State):

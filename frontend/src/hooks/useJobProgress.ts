@@ -30,7 +30,7 @@ export function useJobProgress(jobId: string | null, onComplete?: () => void) {
           setCurrentStage(data.stage);
         }
 
-        const terminalStages: JobStatus[] = ['COMPLETED', 'PARTIAL_SUCCESS', 'FAILED', 'CANCELLED'];
+        const terminalStages: (JobStatus | string)[] = ['COMPLETED', 'PARTIAL_SUCCESS', 'FAILED', 'CANCELLED', 'PDF_ABORTED'];
         if (terminalStages.includes(data.stage as JobStatus)) {
           setIsFinished(true);
           es.close();

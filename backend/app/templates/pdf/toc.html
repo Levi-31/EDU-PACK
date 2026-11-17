@@ -3,20 +3,32 @@
 
     <div class="toc-list">
         {% for item in chapters %}
-        {% set ch_num = loop.index %}
+        {% set ch_num = item.chapter_idx or loop.index %}
+        {% if item.has_notes and item.is_available %}
         <div class="toc-row toc-entry">
             <a href="#chapter-{{ ch_num }}" class="toc-link toc-entry-link">
                 <span class="toc-num toc-entry-num">{{ '%02d' % ch_num }}</span>
                 <span class="toc-text">
                     <span class="toc-title-text toc-entry-title">{{ item.clean_title or item.title }}</span>
-                    {% if not item.is_available or not item.has_notes %}
-                        <span class="toc-badge-unavailable">Transcript Unavailable</span>
-                    {% endif %}
                 </span>
                 <span class="toc-leader"></span>
                 <span class="toc-page">{{ item.page_number or '--' }}</span>
             </a>
         </div>
+        {% else %}
+        <div class="toc-row toc-entry toc-entry-unavailable">
+            <div class="toc-link toc-entry-link toc-disabled-entry">
+                <span class="toc-num toc-entry-num">{{ '%02d' % ch_num }}</span>
+                <span class="toc-text">
+                    <span class="toc-title-text toc-entry-title toc-title-muted">{{ item.clean_title or item.title }}</span>
+                    <span class="toc-badge-unavailable">Transcript Unavailable</span>
+                    <a href="{{ item.video_url }}" target="_blank" class="toc-watch-link">Watch on YouTube &rarr;</a>
+                </span>
+                <span class="toc-leader"></span>
+                <span class="toc-page">--</span>
+            </div>
+        </div>
+        {% endif %}
         {% endfor %}
 
         <div class="toc-row toc-entry toc-review-row toc-entry-revision">

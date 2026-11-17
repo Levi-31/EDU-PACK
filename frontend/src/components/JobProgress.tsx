@@ -38,6 +38,7 @@ export const JobProgress: React.FC<JobProgressProps> = ({
   const effectiveProgress = Math.max(job.progress_percentage, latestProgress);
   const isCompleted = job.status === 'COMPLETED' || job.status === 'PARTIAL_SUCCESS';
   const isFailed = job.status === 'FAILED';
+  const hasPdf = Boolean(job.pdf_url || job.artifact);
 
   useEffect(() => {
     if (logTerminalRef.current) {
@@ -45,12 +46,13 @@ export const JobProgress: React.FC<JobProgressProps> = ({
     }
   }, [events]);
 
-  // 4 clear, professional milestones
+  // 5 clear, professional milestones covering full agent pipeline
   const milestones = [
     { id: 'transcripts', label: '1. Ingest Transcripts', active: true },
-    { id: 'planning', label: '2. Decompose Topics', active: effectiveProgress >= 25 },
-    { id: 'synthesis', label: '3. Synthesize Notes', active: effectiveProgress >= 50 },
-    { id: 'export', label: '4. Compile PDF', active: isFinished || effectiveProgress >= 90 },
+    { id: 'planning', label: '2. Decompose Topics', active: effectiveProgress >= 20 },
+    { id: 'synthesis', label: '3. Synthesize Notes', active: effectiveProgress >= 45 },
+    { id: 'diagrams', label: '4. Architecture Diagrams', active: effectiveProgress >= 70 },
+    { id: 'export', label: '5. Compile PDF', active: isFinished || effectiveProgress >= 90 },
   ];
 
   return (
@@ -103,22 +105,35 @@ export const JobProgress: React.FC<JobProgressProps> = ({
                   <span>View Notes</span>
                 </button>
 
-                <a
-                  href={getDownloadUrl(job.id)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-sans text-xs font-semibold shadow-sm smooth-transition active:scale-[0.98]"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </a>
+                {hasPdf && (
+                  <a
+                    href={getDownloadUrl(job.id)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-sans text-xs font-semibold shadow-sm smooth-transition active:scale-[0.98]"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </a>
+                )}
               </>
             )}
           </div>
         </div>
 
-        {/* 4 Milestones Stepper */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+        {/* Informative Error / Threshold Notice */}
+        {job.error_summary && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <div className="font-semibold text-amber-600 dark:text-amber-400">Notice</div>
+              <div className="text-on-surface-variant leading-relaxed">{job.error_summary}</div>
+            </div>
+          </div>
+        )}
+
+        {/* 5 Milestones Stepper */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1 font-mono text-[11px]">
           {milestones.map((m) => (
             <div
               key={m.id}
@@ -170,9 +185,10 @@ export const JobProgress: React.FC<JobProgressProps> = ({
           <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
             {job.videos && job.videos.length > 0 ? (
               job.videos.map((vid, idx) => {
-                const isVidDone = vid.status === 'COMPLETED' || vid.has_notes || (isCompleted && vid.status !== 'FAILED' && vid.status !== 'SKIPPED');
-                const isVidFail = vid.status === 'FAILED' || vid.status === 'TRANSCRIPT_FAILED';
-                const isVidProc = !isVidDone && !isVidFail && vid.status !== 'SKIPPED' && vid.status !== 'PENDING';
+                const isTranscriptFail = vid.status === 'TRANSCRIPT_FAILED';
+                const isVidDone = vid.status === 'COMPLETED' || vid.has_notes;
+                const isVidFail = vid.status === 'FAILED';
+                const isVidProc = !isVidDone && !isVidFail && !isTranscriptFail && vid.status !== 'SKIPPED' && vid.status !== 'PENDING';
 
                 return (
                   <div
@@ -187,9 +203,23 @@ export const JobProgress: React.FC<JobProgressProps> = ({
                         <span className="text-on-surface font-medium truncate block">
                           {vid.title}
                         </span>
-                        <span className="text-on-surface-variant/60 font-mono text-[10px]">
-                          {vid.duration_formatted ? `${vid.duration_formatted} • ` : ''}Timestamp Verified
-                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-on-surface-variant/60 font-mono text-[10px]">
+                            {vid.duration_formatted ? `${vid.duration_formatted} • ` : ''}Timestamp Verified
+                          </span>
+                          {isTranscriptFail && vid.video_id && (
+                            <a
+                              href={`https://www.youtube.com/watch?v=${vid.video_id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary hover:underline flex items-center gap-1 font-mono text-[10px]"
+                              title="Watch video on YouTube"
+                            >
+                              <span>Watch on YouTube</span>
+                              <ArrowRight className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -206,13 +236,19 @@ export const JobProgress: React.FC<JobProgressProps> = ({
                           <span>Synthesizing...</span>
                         </span>
                       )}
+                      {isTranscriptFail && (
+                        <span className="text-amber-500 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded text-[10px] font-medium border border-amber-500/20 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>Transcript Unavailable</span>
+                        </span>
+                      )}
                       {isVidFail && (
                         <span className="text-error flex items-center gap-1">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           <span>Failed</span>
                         </span>
                       )}
-                      {!isVidDone && !isVidProc && !isVidFail && (
+                      {!isVidDone && !isVidProc && !isVidFail && !isTranscriptFail && (
                         <span className="text-outline">Waiting</span>
                       )}
                     </div>
@@ -260,10 +296,16 @@ export const JobProgress: React.FC<JobProgressProps> = ({
               ))
             )}
 
-            {isFinished && (
+            {isFinished && hasPdf && (
               <div className="pt-2 text-tertiary font-mono text-[11px] flex items-center gap-1.5 border-t border-outline-variant/20">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Monograph ready for download.</span>
+              </div>
+            )}
+            {isFinished && !hasPdf && job.error_summary && (
+              <div className="pt-2 text-amber-500 font-mono text-[11px] flex items-center gap-1.5 border-t border-outline-variant/20">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{job.error_summary}</span>
               </div>
             )}
           </div>

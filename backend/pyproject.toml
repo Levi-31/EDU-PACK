@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "playlist-scholar-backend"
 version = "0.1.0"
-description = "Playlist Scholar: Agentic YouTube-to-Technical-Notes Platform"
+description = "tokens.to.systems: Agentic YouTube-to-Technical-Notes Platform"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

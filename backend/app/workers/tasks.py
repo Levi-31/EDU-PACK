@@ -182,17 +182,29 @@ async def run_playlist_job(job_id: str):
             )
 
         # Determine Final Job Status
-        if completed_count == len(final_state.videos):
+        if final_state.current_stage == "PDF_ABORTED":
+            final_job_status = JobStatus.FAILED if completed_count == 0 else JobStatus.PARTIAL_SUCCESS
+            final_stage = "PDF_ABORTED"
+            completion_message = final_state.error_summary or (
+                "PDF generation aborted: transcript availability fell below the required threshold."
+            )
+        elif completed_count == len(final_state.videos):
             final_job_status = JobStatus.COMPLETED
+            final_stage = "FINISHED"
+            completion_message = f"Compilation complete: {completed_count}/{len(final_state.videos)} video chapters generated. PDF ready for download."
         elif completed_count > 0:
             final_job_status = JobStatus.PARTIAL_SUCCESS
+            final_stage = "FINISHED"
+            completion_message = f"Compilation complete: {completed_count}/{len(final_state.videos)} video chapters generated. PDF ready for download."
         else:
             final_job_status = JobStatus.FAILED
+            final_stage = "FINISHED"
+            completion_message = final_state.error_summary or "Processing failed: No chapters could be synthesized."
 
         job_repo.update_status(
             job_id=job_id,
             status=final_job_status,
-            stage="FINISHED",
+            stage=final_stage,
             progress=100.0,
             error_summary=final_state.error_summary,
             completed_videos=completed_count,
@@ -205,7 +217,7 @@ async def run_playlist_job(job_id: str):
         await event_bus.publish(
             job_id=job_id,
             stage=final_job_status.value,
-            message=f"Compilation complete: {completed_count}/{len(final_state.videos)} video chapters generated. PDF ready for download.",
+            message=completion_message,
             progress=100.0
         )
 

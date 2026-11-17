@@ -6,7 +6,7 @@ This document details the architectural design, agentic orchestration pipelines,
 
 The system is engineered as a high-throughput, dual-engine technical synthesis platform:
 
-1. **Subsystem A: Playlist Scholar (YouTube Notes & Handbook Synthesis Engine)**  
+1. **Subsystem A: tokens.to.systems (YouTube Notes & Handbook Synthesis Engine)**  
    Transforms single YouTube videos or multi-lecture YouTube playlists into publication-grade technical handbooks. It executes an agentic LangGraph workflow featuring transcript normalization, semantic chunking, chronological timestamp alignment (`?t=XXs`), theory enrichment, Mermaid diagram generation, hallucination review loops, and pixel-perfect PDF compilation via Playwright Chromium.
 
 2. **Subsystem B: Levi-31 Autonomous Deep Research Module (Research & Synthesis Engine)**  
@@ -56,7 +56,7 @@ flowchart TD
     end
 
     subgraph AgenticCore["Agentic Orchestration Layer (LangGraph)"]
-        SubsystemA["Playlist Scholar Engine\nState Graph: Coordinator -> Transcript -> Planner -> Theory -> Notes -> Visuals -> Review -> PDF"]
+        SubsystemA["tokens.to.systems Engine\nState Graph: Coordinator -> Transcript -> Planner -> Theory -> Notes -> Visuals -> Review -> PDF"]
         SubsystemB["Levi-31 Deep Research Engine\nState Graph: Router -> Researcher -> Orchestrator -> [Parallel Writers] -> Reducer -> Images -> MinIO"]
         
         CeleryWorker --> SubsystemA
@@ -90,7 +90,7 @@ flowchart TD
 
 ---
 
-## 3. Subsystem 1: Playlist Scholar (YouTube Notes & Handbook)
+## 3. Subsystem 1: tokens.to.systems (YouTube Notes & Handbook)
 
 ### 3.1 Capabilities & Design
 - **Single Video & Multi-Video Playlists**: Auto-detects whether the input URL is a standalone video (`youtu.be`, `/watch?v=`, `/shorts/`, `/embed/`) or a complete multi-lecture playlist (`list=...`).

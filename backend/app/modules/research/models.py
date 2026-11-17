@@ -48,16 +48,22 @@ class EvidencePack(BaseModel):
 # ---- Image planning schema ----
 class ImageSpec(BaseModel):
     placeholder: str = Field(..., description="e.g. [[IMAGE_1]]")
+    kind: Literal["mermaid", "image"] = Field(
+        "mermaid",
+        description="mermaid for anything expressible as a diagram; image only when a real picture is required.",
+    )
+    mermaid_code: Optional[str] = Field(None, description="Mermaid source without fences. Required when kind is mermaid.")
+    section_heading: Optional[str] = Field(None, description="Exact heading of the section that discusses this visual's topic.")
     filename: str = Field(..., description="Save under images/, e.g. qkv_flow.png")
     alt: str
     caption: str
-    prompt: str = Field(..., description="Prompt to send to the image model.")
+    prompt: str = Field(..., description="Prompt to send to the image model. For mermaid, used only if the diagram fails to parse.")
     size: Literal["1024x1024", "1024x1536", "1536x1024"] = "1024x1024"
     quality: Literal["low", "medium", "high"] = "medium"
 
 
 class GlobalImagePlan(BaseModel):
-    md_with_placeholders: str
+    md_with_placeholders: str = Field("", description="Leave empty. Visuals are placed using section_heading.")
     images: List[ImageSpec] = Field(default_factory=list)
 
 

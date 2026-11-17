@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Navbar, AppModule, YouTubeNavTab, ResearchNavTab } from './components/Navbar';
+import { BrandMark, BrandName } from './components/Brand';
 import { PlaylistInput } from './components/PlaylistInput';
 import { PlaylistPreview } from './components/PlaylistPreview';
 import { JobProgress } from './components/JobProgress';
@@ -17,6 +18,7 @@ import {
   listJobs,
   retryJob,
   getJobNotes,
+  getDownloadUrl,
   createResearchJob,
   getResearchJob,
   listResearchJobs,
@@ -359,6 +361,7 @@ export function App() {
                   jobId={activeYtJobId}
                   notes={activeNotes || []}
                   onBackToDashboard={() => setYtTab('create')}
+                  pdfUrl={activeYtJob?.pdf_url || (activeYtJob?.artifact ? getDownloadUrl(activeYtJob.id) : undefined)}
                 />
               ) : (
                 <div className="max-w-md mx-auto py-16 text-center space-y-3 font-mono text-xs text-on-surface-variant">
@@ -397,7 +400,8 @@ export function App() {
       <footer className="border-t border-outline-variant/20 py-6 text-xs text-outline">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-on-surface">◇ Synthara</span>
+            <BrandMark className="w-4 h-4 text-on-surface" />
+            <span className="font-semibold text-on-surface"><BrandName /></span>
             <span>&mdash;</span>
             <span>Research &amp; Learning Workspace</span>
           </div>

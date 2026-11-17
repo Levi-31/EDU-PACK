@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ title }} — Synthara Research</title>
+    <title>{{ title }} — tokens.to.systems</title>
     <style>
         @page {
             size: A4;
@@ -52,22 +52,39 @@
             line-height: 1.2;
             letter-spacing: -0.6px;
             color: #0F172A;
-            margin: 0 0 10px 0;
+            margin: 0;
+            white-space: nowrap;
         }
 
-        .research-subtitle {
-            font-size: 12pt;
-            font-weight: 500;
-            color: #475569;
-            margin: 0 0 8px 0;
-            line-height: 1.4;
+        .research-contents {
+            margin: 0 0 24px 0;
+            padding: 12px 16px;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 9.5pt;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
-        .research-date {
-            font-size: 8.5pt;
-            color: #64748B;
-            font-weight: 500;
-            margin-top: 4px;
+        .research-contents-title {
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 6px;
+        }
+
+        .research-contents ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .research-contents li {
+            margin: 2px 0;
+        }
+
+        .research-contents a {
+            color: #4F46E5;
+            text-decoration: none;
         }
 
         /* Article Typography */
@@ -170,6 +187,39 @@
             color: inherit;
         }
 
+        /* Keep an image and its caption together */
+        .research-content p:has(> img) {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Mermaid diagrams: scale to fit, never split across pages */
+        .diagram-box {
+            margin: 20px 0 16px 0;
+            padding: 14px;
+            background-color: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .mermaid-canvas svg {
+            /* No max-width here: Mermaid's inline max-width keeps small diagrams at natural size */
+            display: block;
+            max-height: 200mm;
+            height: auto !important;
+            margin: 0 auto;
+        }
+
+        .diagram-caption {
+            margin-top: 10px;
+            font-size: 9.5pt;
+            font-style: italic;
+            color: #475569;
+        }
+
         /* Standard 16:9 Image Display in PDF */
         .research-content img {
             width: 100% !important;
@@ -261,93 +311,36 @@
             text-decoration: underline;
             text-underline-offset: 2px;
         }
-
-        /* References Section */
-        .references-block {
-            margin-top: 36px;
-            padding-top: 18px;
-            border-top: 1.5px solid #0F172A;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        .references-title {
-            font-size: 14pt;
-            font-weight: 700;
-            color: #0F172A;
-            margin: 0 0 14px 0;
-        }
-
-        .references-list {
-            margin: 0;
-            padding-left: 20px;
-            font-size: 8.5pt;
-            color: #475569;
-            line-height: 1.7;
-        }
-
-        .reference-item {
-            margin-bottom: 8px;
-        }
-
-        .ref-title {
-            font-weight: 600;
-            color: #0F172A;
-        }
-
-        .ref-url a {
-            color: #4F46E5;
-            text-decoration: none;
-            word-break: break-all;
-        }
-
-        .ref-url a:hover {
-            text-decoration: underline;
-        }
-
-        .ref-date {
-            color: #94A3B8;
-            margin-left: 4px;
-        }
     </style>
+    {% if mermaid_js %}
+    <script>
+        {{ mermaid_js | safe }}
+    </script>
+    {% endif %}
 </head>
 <body>
+    {% include "watermark.html" %}
     <div class="research-container">
         <!-- Editorial Header -->
         <div class="research-header">
-            <h1 class="research-title">{{ title }}</h1>
-            {% if topic and topic.strip().lower() != title.strip().lower() and not title.lower().startswith(topic.lower()[:20]) %}
-            <div class="research-subtitle">{{ topic }}</div>
-            {% endif %}
-            {% if as_of %}
-            <div class="research-date">Updated: {{ as_of }}</div>
-            {% endif %}
+            <h1 class="research-title"{% if title_pt %} style="font-size: {{ title_pt }}pt;"{% endif %}>{{ title }}</h1>
         </div>
+
+        {% if contents and contents|length > 1 %}
+        <nav class="research-contents">
+            <div class="research-contents-title">Contents</div>
+            <ol>
+                {% for section in contents %}
+                <li><a href="#{{ section.id }}">{{ section.title }}</a></li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
 
         <!-- Rendered Article Body -->
         <div class="research-content">
             {{ body_html | safe }}
         </div>
-
-        <!-- Academic References List -->
-        {% if evidence_items and evidence_items|length > 0 %}
-        <div class="references-block">
-            <h2 class="references-title">References</h2>
-            <ol class="references-list">
-                {% for item in evidence_items %}
-                <li class="reference-item">
-                    <span class="ref-title">{{ item.title or 'External Reference' }}</span>
-                    {% if item.url %}
-                    <span class="ref-url">&mdash; <a href="{{ item.url }}">{{ item.url }}</a></span>
-                    {% endif %}
-                    {% if item.published_at or item.published_date %}
-                    <span class="ref-date">({{ item.published_at or item.published_date }})</span>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ol>
-        </div>
-        {% endif %}
     </div>
 </body>
 </html>

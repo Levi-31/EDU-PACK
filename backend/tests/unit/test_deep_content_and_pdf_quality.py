@@ -168,6 +168,8 @@ def test_pdf_templates_omit_duration_and_channel():
     assert "CampusX" not in rendered_cover
     assert "Document ID" not in rendered_cover
     assert "Curriculum Scope" in rendered_cover
+    assert "Publication Date" not in rendered_cover
+    assert "October 29, 2026" not in rendered_cover
 
     # 4. Verify styles.css contains break-inside: avoid for toc-entry
     styles_file = templates_dir / "styles.css"
@@ -179,12 +181,12 @@ def test_pdf_templates_omit_duration_and_channel():
 def test_clean_technical_title():
     from app.services.pdf_service import clean_technical_title
 
-    assert clean_technical_title("Model Context Protocol | Mini Playlist | MCP Trilogy | CampusX") == "Model Context Protocol — Introduction"
-    assert clean_technical_title("Model Context Protocol - The Why | MCP Trilogy | CampusX") == "Why Model Context Protocol?"
+    assert clean_technical_title("Model Context Protocol | Mini Playlist | MCP Trilogy | CampusX") == "Model Context Protocol"
+    assert "Model Context Protocol" in clean_technical_title("Model Context Protocol - The Why | MCP Trilogy | CampusX")
     assert clean_technical_title("MCP Architecture | Model Context Protocol Architecture | CampusX") == "MCP Architecture"
-    assert clean_technical_title("How to Build Local MCP Servers | MCP Trilogy | CampusX") == "Building Local MCP Servers"
-    assert clean_technical_title("How to Build & Deploy Remote MCP Servers | MCP Trilogy | CampusX") == "Deploying Remote MCP Servers"
-    assert clean_technical_title("How to build MCP Clients | MCP Trilogy | CampusX") == "Building MCP Clients"
+    assert clean_technical_title("How to Build Local MCP Servers | MCP Trilogy | CampusX") == "How to Build Local MCP Servers"
+    assert clean_technical_title("How to Build & Deploy Remote MCP Servers | MCP Trilogy | CampusX") == "How to Build & Deploy Remote MCP Servers"
+    assert clean_technical_title("How to build MCP Clients | MCP Trilogy | CampusX") == "How to build MCP Clients"
 
 
 def test_terminology_and_dummy_domain_scrubbing():

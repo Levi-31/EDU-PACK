@@ -223,6 +223,29 @@ a:hover {
     vertical-align: middle;
 }
 
+.toc-title-muted {
+    color: var(--color-muted) !important;
+}
+
+.toc-disabled-entry {
+    cursor: default;
+    opacity: 0.85;
+}
+
+.toc-watch-link {
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: var(--color-accent) !important;
+    text-decoration: underline !important;
+    margin-left: 8px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.toc-watch-link:hover {
+    color: var(--color-primary) !important;
+}
+
 .toc-leader {
     flex-grow: 1;
     border-bottom: 1px dotted var(--color-border);
@@ -610,4 +633,11 @@ pre code {
     color: var(--color-callout-danger-text);
     margin: 16px 0;
     font-size: 9pt;
+}
+
+/* The zero-margin cover sizes the fixed watermark box to the full sheet; shrink it to the
+   text area so it stays centered on every page after the cover. */
+.pdf-watermark {
+    width: calc(100% - 36mm) !important;
+    height: calc(100% - 40mm) !important;
 }

@@ -26,6 +26,12 @@ import {
   getResearchPdfUrl,
   getResearchImageUrl
 } from '../../api/client';
+import { MermaidDiagram } from '../MermaidDiagram';
+
+interface RenderedSegment {
+  html?: string;
+  mermaidCode?: string;
+}
 
 interface ResearchResultsProps {
   job: ResearchJobDetailResponse;
@@ -136,8 +142,8 @@ export const ResearchResults: React.FC<ResearchResultsProps> = ({ job, onBack })
   }, [job.image_specs, job.images]);
 
   // Convert relative image URLs and placeholders in markdown to full API URLs
-  const renderedHtml = useMemo(() => {
-    if (!job.markdown_content) return '<p class="text-outline italic">No content generated.</p>';
+  const renderedSegments = useMemo<RenderedSegment[]>(() => {
+    if (!job.markdown_content) return [{ html: '<p class="text-outline italic">No content generated.</p>' }];
 
     let processedMd = job.markdown_content;
 
@@ -193,9 +199,12 @@ export const ResearchResults: React.FC<ResearchResultsProps> = ({ job, onBack })
     );
 
     try {
-      return marked.parse(processedMd) as string;
+      // Odd indexes hold the source captured from ```mermaid fences
+      return processedMd.split(/```mermaid[ \t]*\n([\s\S]*?)```/).map((part, idx) =>
+        idx % 2 === 1 ? { mermaidCode: part } : { html: marked.parse(part) as string }
+      );
     } catch (e) {
-      return `<pre class="text-xs p-4 overflow-auto">${job.markdown_content}</pre>`;
+      return [{ html: `<pre class="text-xs p-4 overflow-auto">${job.markdown_content}</pre>` }];
     }
   }, [job.markdown_content, job.id, job.image_specs, job.images]);
 
@@ -307,10 +316,19 @@ export const ResearchResults: React.FC<ResearchResultsProps> = ({ job, onBack })
       {/* Tab 1: Markdown Preview */}
       {activeTab === 'preview' && (
         <div className="bg-surface-container-low/70 border border-outline-variant/30 rounded-2xl p-6 sm:p-10 shadow-sm">
-          <div
-            className="markdown-article max-w-none"
-            dangerouslySetInnerHTML={{ __html: renderedHtml }}
-          />
+          {renderedSegments.map((segment, idx) =>
+            segment.mermaidCode ? (
+              <div key={idx} className="my-6">
+                <MermaidDiagram mermaidCode={segment.mermaidCode} />
+              </div>
+            ) : (
+              <div
+                key={idx}
+                className="markdown-article max-w-none"
+                dangerouslySetInnerHTML={{ __html: segment.html || '' }}
+              />
+            )
+          )}
         </div>
       )}
 
