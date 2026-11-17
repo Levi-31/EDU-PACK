@@ -19,7 +19,7 @@ from app.domain.schemas.artifact import ArtifactSchema
 from app.domain.schemas.playlist import GenerationOptions
 from app.domain.schemas.notes import GlossaryItem, Flashcard
 from app.agents.state import VideoGraphItem
-from app.integrations.pdf.renderer import PDFRendererInterface
+from app.integrations.pdf.renderer import PDFRendererInterface, fit_heading
 from app.integrations.pdf.playwright_renderer import PlaywrightPDFRenderer
 from app.integrations.pdf.reportlab_renderer import ReportLabFallbackRenderer
 from app.integrations.storage.base import StorageProvider
@@ -29,6 +29,8 @@ from app.db.repositories.artifact_repository import ArtifactRepository
 from app.db.models.artifact import Artifact
 
 logger = logging.getLogger(__name__)
+
+COVER_TEXT_WIDTH_PT = 453  # A4 width minus the cover's 25mm side padding
 
 
 def _render_markdown(text: Optional[str]) -> str:
@@ -45,71 +47,73 @@ def _render_markdown(text: Optional[str]) -> str:
 
 def _normalize_glossary(raw_items: List[GlossaryItem]) -> List[GlossaryItem]:
     """
-    Normalizes and consolidates duplicate or overlapping glossary items (e.g. 'GCP',
-    'Google Cloud Platform (GCP)', 'IAM', 'Identity and Access Management (IAM)', 'HA').
+    Normalizes and consolidates duplicate or overlapping glossary items across chapters.
+    Dynamically identifies acronyms and their full expansions (e.g., 'RAG' vs
+    'Retrieval-Augmented Generation (RAG)', 'IAM' vs 'Identity and Access Management (IAM)')
+    directly from the content without relying on brittle domain-specific hardcoded dictionaries.
     Selects the most comprehensive definition and returns an alphabetically sorted list.
     """
-    KNOWN_CANONICAL_SYNONYMS = {
-        "iam": "Identity and Access Management (IAM)",
-        "identity and access management": "Identity and Access Management (IAM)",
-        "identity and access management (iam)": "Identity and Access Management (IAM)",
-        "gcp": "Google Cloud Platform (GCP)",
-        "google cloud platform": "Google Cloud Platform (GCP)",
-        "google cloud platform (gcp)": "Google Cloud Platform (GCP)",
-        "google cloud": "Google Cloud Platform (GCP)",
-        "vpc": "Virtual Private Cloud (VPC)",
-        "virtual private cloud": "Virtual Private Cloud (VPC)",
-        "virtual private cloud (vpc)": "Virtual Private Cloud (VPC)",
-        "gke": "Google Kubernetes Engine (GKE)",
-        "google kubernetes engine": "Google Kubernetes Engine (GKE)",
-        "google kubernetes engine (gke)": "Google Kubernetes Engine (GKE)",
-        "gcs": "Google Cloud Storage (GCS)",
-        "google cloud storage": "Google Cloud Storage (GCS)",
-        "google cloud storage (gcs)": "Google Cloud Storage (GCS)",
-        "cli": "Command Line Interface (CLI)",
-        "command line interface": "Command Line Interface (CLI)",
-        "command-line interface": "Command Line Interface (CLI)",
-        "command line interface (cli)": "Command Line Interface (CLI)",
-        "ha": "High Availability (HA)",
-        "high availability": "High Availability (HA)",
-        "high availability (ha)": "High Availability (HA)",
-        "vm": "Virtual Machine (VM)",
-        "virtual machine": "Virtual Machine (VM)",
-        "virtual machines": "Virtual Machine (VM)",
-        "nat": "Network Address Translation (NAT)",
-        "network address translation": "Network Address Translation (NAT)",
-        "network address translation (nat)": "Network Address Translation (NAT)",
-        "dockerfile": "Dockerfile",
-        "api": "Application Programming Interface (API)",
-        "application programming interface": "Application Programming Interface (API)",
-    }
+    if not raw_items:
+        return []
 
+    # 1. First pass: dynamically discover canonical expansions and acronyms from the terms themselves
+    alias_to_canonical: Dict[str, str] = {}
+
+    for item in raw_items:
+        clean = item.term.strip()
+        # Case A: "Full Term Name (ACRONYM)" e.g. "Identity and Access Management (IAM)"
+        match_abbr = re.match(r"^(.+?)\s*\(([A-Za-z0-9\-_\s]+)\)$", clean)
+        if match_abbr:
+            full_name = match_abbr.group(1).strip()
+            abbr = match_abbr.group(2).strip()
+            canonical = clean
+            alias_to_canonical[clean.lower()] = canonical
+            alias_to_canonical[abbr.lower()] = canonical
+            alias_to_canonical[full_name.lower()] = canonical
+            continue
+
+        # Case B: "ACRONYM (Full Term Name)" e.g. "IAM (Identity and Access Management)"
+        match_reverse = re.match(r"^([A-Za-z0-9\-_]{2,10})\s*\((.+?)\)$", clean)
+        if match_reverse:
+            abbr = match_reverse.group(1).strip()
+            full_name = match_reverse.group(2).strip()
+            canonical = f"{full_name} ({abbr})"
+            alias_to_canonical[clean.lower()] = canonical
+            alias_to_canonical[abbr.lower()] = canonical
+            alias_to_canonical[full_name.lower()] = canonical
+
+    # 2. Second pass: group and merge definitions
     canonical_map: Dict[str, GlossaryItem] = {}
 
     for item in raw_items:
-        clean_term = item.term.strip()
-        lower_term = clean_term.lower()
+        term_clean = item.term.strip()
+        lower_term = term_clean.lower()
+        def_clean = item.definition.strip()
 
-        canonical_name = KNOWN_CANONICAL_SYNONYMS.get(lower_term)
-        if not canonical_name:
-            match = re.search(r"\(([A-Za-z0-9]+)\)", clean_term)
-            if match:
-                acronym = match.group(1).lower()
-                canonical_name = KNOWN_CANONICAL_SYNONYMS.get(acronym, clean_term)
-            else:
-                canonical_name = clean_term
-
+        # Resolve to discovered canonical name, or fallback to clean term
+        canonical_name = alias_to_canonical.get(lower_term, term_clean)
         canon_key = canonical_name.lower()
+
+        # Plural normalization if needed (e.g. "virtual machines" -> "virtual machine")
+        if canon_key.endswith("s") and not canon_key.endswith("ss") and len(canon_key) > 4:
+            singular_key = canon_key[:-1]
+            if singular_key in canonical_map:
+                canon_key = singular_key
+
         if canon_key not in canonical_map:
             canonical_map[canon_key] = GlossaryItem(
                 term=canonical_name,
-                definition=item.definition.strip()
+                definition=def_clean
             )
         else:
             existing = canonical_map[canon_key]
-            if len(item.definition.strip()) > len(existing.definition):
-                existing.definition = item.definition.strip()
+            # Retain the longer, more comprehensive definition
+            if len(def_clean) > len(existing.definition):
+                existing.definition = def_clean
+            # Prefer term with acronym expansion or proper capitalization
             if "(" in canonical_name and "(" not in existing.term:
+                existing.term = canonical_name
+            elif existing.term.islower() and not canonical_name.islower():
                 existing.term = canonical_name
 
     return sorted(list(canonical_map.values()), key=lambda x: x.term.lower())
@@ -239,15 +243,32 @@ class PDFService:
 
             # 2. Prepare ordered chapters
             sorted_videos = sorted(videos, key=lambda v: v.original_position)
+            total_count = len(sorted_videos)
+            completed_count = sum(1 for v in sorted_videos if v.notes is not None)
+            is_single_video = (total_count == 1)
+
+            # Defensive threshold check: Do not generate PDF if requirements are not met
+            if is_single_video and completed_count == 0:
+                raise PDFGenerationException(
+                    "Transcript is unavailable for this video. PDF generation cannot proceed as captions or transcripts are required."
+                )
+
+            if not is_single_video and (completed_count / max(total_count, 1)) < 0.50:
+                unavailable_count = total_count - completed_count
+                avail_pct = round((completed_count / max(total_count, 1)) * 100)
+                raise PDFGenerationException(
+                    f"Transcripts are unavailable for the majority of videos in this playlist "
+                    f"({unavailable_count}/{total_count} unavailable, {avail_pct}% available). "
+                    f"PDF generation has been aborted as at least 50% transcript availability is required."
+                )
+
             chapters_data = []
             raw_flashcards = []
             raw_glossary = []
 
-            completed_count = 0
-            for v in sorted_videos:
+            for idx, v in enumerate(sorted_videos, 1):
                 has_notes = v.notes is not None
                 if has_notes:
-                    completed_count += 1
                     # Clean emojis and icons from citation titles
                     if v.notes.all_sources:
                         for s in v.notes.all_sources:
@@ -284,6 +305,7 @@ class PDFService:
 
                 chapters_data.append({
                     "position": v.original_position,
+                    "chapter_idx": idx,
                     "title": v.title,
                     "clean_title": clean_technical_title(v.title, playlist_title),
                     "channel_title": v.channel_title,
@@ -305,9 +327,12 @@ class PDFService:
             # 3. Helper to render HTML with specific calculated page numbers
             def _render_document_html(page_mapping: Optional[Dict[str, int]] = None) -> str:
                 if page_mapping:
-                    for idx, ch in enumerate(chapters_data, 1):
-                        p = page_mapping.get(f"chapter-{idx}")
-                        ch["page_number"] = f"{p:02d}" if p is not None else "--"
+                    for ch in chapters_data:
+                        if ch["has_notes"] and ch["is_available"]:
+                            p = page_mapping.get(f"chapter-{ch['chapter_idx']}")
+                            ch["page_number"] = f"{p:02d}" if p is not None else "--"
+                        else:
+                            ch["page_number"] = "--"
                     rev_p = page_mapping.get("final-revision")
                     rev_page_str = f"{rev_p:02d}" if rev_p is not None else "--"
                 else:
@@ -325,13 +350,13 @@ class PDFService:
                             f"Standalone technical reference and comprehensive lecture notes synthesized from {playlist_title}."
                         )
                     },
+                    cover_heading=fit_heading(playlist_title, width_pt=COVER_TEXT_WIDTH_PT, max_pt=28),
                     job={"id": job_id},
                     chapters=chapters_data,
                     review_page_number=rev_page_str,
                     completed_count=completed_count,
                     total_count=len(sorted_videos),
                     is_single_video=(len(sorted_videos) == 1),
-                    generation_date=datetime.utcnow().strftime("%B %d, %Y"),
                     consolidated_flashcards=consolidated_flashcards,
                     consolidated_glossary=consolidated_glossary,
                     css_styles=css_styles,

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-    PROJECT_NAME: str = "Playlist Scholar"
+    PROJECT_NAME: str = "tokens.to.systems"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"

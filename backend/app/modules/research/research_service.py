@@ -32,6 +32,10 @@ def safe_slug(title: str) -> str:
     return s or "research"
 
 
+RESEARCH_TEXT_WIDTH_PT = 493  # A4 width minus the 18mm side margins
+MERMAID_JS_PATH = Path(__file__).resolve().parent.parent.parent / "static" / "js" / "mermaid.min.js"
+
+
 def bundle_zip(md_text: str, md_filename: str, images_dir: Path) -> bytes:
     buf = BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -428,11 +432,15 @@ class ResearchService:
 
         import re
         import base64
+        import html
         import markdown
         from jinja2 import Environment, FileSystemLoader
         from app.integrations.pdf.playwright_renderer import PlaywrightPDFRenderer
+        from app.integrations.pdf.renderer import fit_heading
+        from app.modules.research.services.mermaid import clean_mermaid
+        from app.modules.research.text_cleanup import repair_control_chars, strip_reference_notes
 
-        md_text = job.final_markdown
+        md_text = strip_reference_notes(repair_control_chars(job.final_markdown))
         images_dir = job_dir / "images"
 
         # Ensure planned images are embedded in md_text if not already present
@@ -477,47 +485,39 @@ class ResearchService:
 
         clean_md = re.sub(r"!\[([^\]]*)\]\((?:(?:images|\./images)/)?([^)]+)\)", replace_img, clean_md)
 
-        # Numbered Citation conventions: map URLs and Source links to [1], [2], [3]
-        evidence_items = list(job.evidence_json or [])
-        url_to_idx = {}
-        for idx, item in enumerate(evidence_items, start=1):
-            url = item.get("url", "").strip() if isinstance(item, dict) else ""
-            if url:
-                url_to_idx[url] = idx
+        # The PDF has no references page: named links stay inline, bare "Source" markers would point nowhere
+        clean_md = re.sub(r"[ \t]*\(?\[source\]\(https?://[^)]+\)\)?", "", clean_md, flags=re.IGNORECASE)
+        clean_md = re.sub(r"[ \t]*\(\s*Source\s*\)", "", clean_md, flags=re.IGNORECASE)
 
-        def replace_citation(match):
-            text = match.group(1)
-            url = match.group(2).strip()
-            if url in url_to_idx:
-                return f"<sup>[{url_to_idx[url]}]</sup>"
-            if text.lower() == "source":
-                for u, idx in url_to_idx.items():
-                    if u in url or url in u:
-                        return f"<sup>[{idx}]</sup>"
-                new_idx = len(evidence_items) + 1
-                url_to_idx[url] = new_idx
-                evidence_items.append({"title": url, "url": url})
-                return f"<sup>[{new_idx}]</sup>"
-            return match.group(0)
+        # Swap Mermaid fences (and their caption) for tokens so Markdown can't touch the diagram source
+        diagram_blocks: List[str] = []
 
-        clean_md = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", replace_citation, clean_md)
+        def stash_mermaid(match):
+            caption = match.group(2)
+            caption_html = f'<div class="diagram-caption">{html.escape(caption)}</div>' if caption else ""
+            diagram_blocks.append(
+                f'<div class="diagram-box"><div class="mermaid-canvas">{html.escape(clean_mermaid(match.group(1)))}</div>{caption_html}</div>'
+            )
+            return f"\n\nMERMAIDDIAGRAM{len(diagram_blocks) - 1}TOKEN\n\n"
 
-        # Also replace generic standalone "(Source)" strings with sequential reference numbers
-        source_counter = [1]
-        def replace_standalone_source(m):
-            if evidence_items:
-                c = source_counter[0]
-                idx = min(c, len(evidence_items))
-                source_counter[0] += 1
-                return f"<sup>[{idx}]</sup>"
-            return ""
-
-        clean_md = re.sub(r"\(\s*Source\s*\)", replace_standalone_source, clean_md, flags=re.IGNORECASE)
+        clean_md = re.sub(r"```mermaid[ \t]*\n(.*?)```(?:[ \t]*\n\*([^*\n]+)\*)?", stash_mermaid, clean_md, flags=re.DOTALL)
 
         body_html = markdown.markdown(
             clean_md,
             extensions=["tables", "fenced_code", "nl2br", "attr_list"]
         )
+
+        for idx, block in enumerate(diagram_blocks):
+            body_html = body_html.replace(f"<p>MERMAIDDIAGRAM{idx}TOKEN</p>", block)
+
+        # Anchor each section so the Contents list can link to it
+        contents = []
+
+        def anchor_section(match):
+            contents.append({"id": f"section-{len(contents) + 1}", "title": re.sub(r"<[^>]+>", "", match.group(1))})
+            return f'<h2 id="{contents[-1]["id"]}">{match.group(1)}</h2>'
+
+        body_html = re.sub(r"<h2>(.*?)</h2>", anchor_section, body_html, flags=re.DOTALL)
 
         template_dir = Path(__file__).resolve().parent.parent.parent / "templates" / "pdf"
         jinja_env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=False)
@@ -528,14 +528,15 @@ class ResearchService:
             # Strip @page:first from styles.css so it never zeroes out page 1 margins
             css_styles = re.sub(r"@page:first\s*\{[^}]*\}", "", css_styles, flags=re.DOTALL)
 
+        heading = fit_heading(blog_title, width_pt=RESEARCH_TEXT_WIDTH_PT, max_pt=26)
         template = jinja_env.get_template("research.html")
         html_content = template.render(
-            title=blog_title,
-            topic=job.topic,
-            as_of=job.as_of,
+            title=heading["text"],
+            title_pt=heading["font_pt"],
+            contents=contents,
             body_html=body_html,
-            evidence_items=evidence_items,
-            css_styles=css_styles
+            css_styles=css_styles,
+            mermaid_js=MERMAID_JS_PATH.read_text(encoding="utf-8") if diagram_blocks and MERMAID_JS_PATH.exists() else ""
         )
 
         try:

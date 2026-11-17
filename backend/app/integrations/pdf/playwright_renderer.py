@@ -1,7 +1,8 @@
 import logging
 from playwright.async_api import async_playwright
 from app.core.exceptions import PDFGenerationException
-from app.integrations.pdf.renderer import PDFRendererInterface
+from app.integrations.pdf.figure_layout import CLOSE_FIGURE_GAPS_JS
+from app.integrations.pdf.renderer import PDFRendererInterface, strip_pdf_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -142,9 +143,16 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
                 except Exception as ex:
                     logger.warning(f"Mermaid execution note: {ex}")
 
+                try:
+                    logger.info(f"Figure layout result: {await page.evaluate(CLOSE_FIGURE_GAPS_JS)}")
+                except Exception as layout_err:
+                    logger.warning(f"Figure layout skipped: {layout_err}")
+
                 pdf_bytes = await page.pdf(
                     format="A4",
                     print_background=True,
+                    outline=True,
+                    tagged=True,
                     margin={
                         "top": "20mm",
                         "bottom": "20mm",
@@ -156,7 +164,7 @@ class PlaywrightPDFRenderer(PDFRendererInterface):
                     footer_template='<div style="font-size:7.5pt; font-family:\'Inter\',sans-serif; color:#5F6B76; width:100%; text-align:center;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>'
                 )
                 await browser.close()
-                return pdf_bytes
+                return strip_pdf_metadata(pdf_bytes)
         except Exception as e:
             logger.error(f"Playwright PDF rendering failed: {e}")
             raise PDFGenerationException(f"Playwright PDF compilation failed: {str(e)}")

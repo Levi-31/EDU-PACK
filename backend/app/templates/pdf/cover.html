@@ -5,14 +5,14 @@
         {% else %}
             <div class="cover-badge">Technical Reference Handbook & Curriculum Notes</div>
         {% endif %}
-        <h1 class="cover-title">{{ playlist.title }}</h1>
+        <h1 class="cover-title"{% if cover_heading %} style="font-size: {{ cover_heading.font_pt }}pt; white-space: nowrap;"{% endif %}>{{ cover_heading.text if cover_heading else playlist.title }}</h1>
         <div class="cover-subtitle">
             {% if playlist.description %}
                 {{ playlist.description[:280] }}{% if playlist.description|length > 280 %}...{% endif %}
             {% elif is_single_video %}
-                Standalone technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by Playlist Scholar.
+                Standalone technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by tokens.to.systems.
             {% else %}
-                Comprehensive technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by Playlist Scholar.
+                Comprehensive technical reference, architectural explanations, practical implementation notes, and active recall review synthesized by tokens.to.systems.
             {% endif %}
         </div>
     </div>
@@ -30,20 +30,12 @@
                 <div class="cover-meta-item-label meta-label">Creator / Channel</div>
                 <div class="cover-meta-item-val meta-val">{{ playlist.channel_name or "YouTube Creator" }}</div>
             </div>
-            <div>
-                <div class="cover-meta-item-label meta-label">Lecture Format</div>
-                <div class="cover-meta-item-val meta-val">Standalone Video Masterclass</div>
-            </div>
             {% else %}
             <div>
                 <div class="cover-meta-item-label meta-label">Curriculum Scope</div>
                 <div class="cover-meta-item-val meta-val">{{ completed_count }} of {{ total_count }} Lectures Synthesized</div>
             </div>
             {% endif %}
-            <div>
-                <div class="cover-meta-item-label meta-label">Publication Date</div>
-                <div class="cover-meta-item-val meta-val">{{ generation_date }}</div>
-            </div>
         </div>
     </div>
 </div>

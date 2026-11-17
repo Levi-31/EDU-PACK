@@ -15,19 +15,21 @@ import {
   FileText,
   RotateCcw
 } from 'lucide-react';
-import { getDownloadUrl, getJobNotes } from '../api/client';
+import { getDownloadUrl, getJobNotes, getJob } from '../api/client';
 import { MermaidDiagram } from './MermaidDiagram';
 
 interface NotesViewerProps {
   jobId: string;
   notes: StructuredVideoNotes[];
   onBackToDashboard: () => void;
+  pdfUrl?: string;
 }
 
 export const NotesViewer: React.FC<NotesViewerProps> = ({
   jobId,
   notes: initialNotes,
   onBackToDashboard,
+  pdfUrl,
 }) => {
   const {
     data: fetchedNotes,
@@ -41,6 +43,14 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
     refetchOnMount: 'always',
     staleTime: 0,
   });
+
+  const { data: jobDetail } = useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => getJob(jobId),
+    enabled: !!jobId && !pdfUrl,
+  });
+
+  const effectivePdfUrl = pdfUrl || jobDetail?.pdf_url || (jobDetail?.artifact ? getDownloadUrl(jobId) : undefined);
 
   const notes = (fetchedNotes && fetchedNotes.length > 0) ? fetchedNotes : (initialNotes || []);
 
@@ -177,15 +187,17 @@ export const NotesViewer: React.FC<NotesViewerProps> = ({
             <span>{markdownCopied ? 'Copied Markdown!' : 'Copy Markdown'}</span>
           </button>
 
-          <a
-            href={getDownloadUrl(jobId)}
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-semibold flex items-center gap-1.5 shadow-sm text-xs smooth-transition"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download PDF</span>
-          </a>
+          {effectivePdfUrl && (
+            <a
+              href={effectivePdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-semibold flex items-center gap-1.5 shadow-sm text-xs smooth-transition"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download PDF</span>
+            </a>
+          )}
         </div>
       </div>
 

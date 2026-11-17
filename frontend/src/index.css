@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Light Mode Tokens — Synthara Minimal Editorial */
+    /* Light Mode Tokens — tokens.to.systems Minimal Editorial */
     --surface: 250 250 250;            /* #fafafa clean off-white */
     --surface-dim: 241 245 249;        /* #f1f5f9 */
     --surface-bright: 255 255 255;     /* #ffffff */
@@ -31,7 +31,7 @@
   }
 
   .dark {
-    /* Dark Mode Tokens — Synthara Deep Slate Workspace */
+    /* Dark Mode Tokens — tokens.to.systems Deep Slate Workspace */
     --surface: 11 15 23;               /* #0b0f17 deep near-black */
     --surface-dim: 11 15 23;
     --surface-bright: 30 41 59;        /* #1e293b */

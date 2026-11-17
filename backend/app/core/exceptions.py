@@ -1,5 +1,5 @@
 class PlaylistScholarException(Exception):
-    """Base exception for Playlist Scholar"""
+    """Base exception for tokens.to.systems"""
     def __init__(self, message: str, status_code: int = 500, details: dict = None):
         super().__init__(message)
         self.message = message

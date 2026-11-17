@@ -1,8 +1,61 @@
 import io
+import logging
 import os
+from typing import Awaitable, Callable
+
 import httpx
 from PIL import Image
 from app.modules.research.interfaces import ImageGeneratorService
+
+logger = logging.getLogger(__name__)
+
+MAX_CLIP_ATTEMPTS = 3
+CLIP_RETRY_HINT = (
+    " IMPORTANT: a previous attempt was cut off at the image edge. Make the whole diagram much smaller, "
+    "occupying only the central 60% of the canvas, with empty white space on every side."
+)
+
+
+class ClippedImageError(RuntimeError):
+    """The image model kept drawing diagram content past the edge of the image."""
+
+
+def content_touches_edge(img_bytes: bytes, strip_ratio: float = 0.01, dark_luma: int = 160, min_dark_pixels: int = 10) -> bool:
+    """
+    Detects diagram content cut off by the image model: dark pixels in the outer 1% of the raw image.
+    Must run before standardize_image_bytes, which pads the image and would hide the cut.
+    """
+    with Image.open(io.BytesIO(img_bytes)) as img:
+        gray = img.convert("L")
+    width, height = gray.size
+    strip_w = max(1, int(width * strip_ratio))
+    strip_h = max(1, int(height * strip_ratio))
+    strips = (
+        (0, 0, strip_w, height),
+        (width - strip_w, 0, width, height),
+        (0, 0, width, strip_h),
+        (0, height - strip_h, width, height),
+    )
+    for box in strips:
+        histogram = gray.crop(box).histogram()
+        if sum(histogram[:dark_luma]) >= min_dark_pixels:
+            return True
+    return False
+
+
+def flatten_near_white(img: Image.Image, threshold: int = 245) -> Image.Image:
+    """Snaps the model's off-white background to pure white so it can't show as a tinted panel on the page."""
+    return img.convert("RGB").point(lambda v: 255 if v >= threshold else v)
+
+
+async def generate_unclipped(generate_raw: Callable[[str], Awaitable[bytes]], prompt: str) -> bytes:
+    """Regenerates diagrams that come back cut off; raises ClippedImageError rather than return a broken one."""
+    for attempt in range(1, MAX_CLIP_ATTEMPTS + 1):
+        raw_bytes = await generate_raw(prompt if attempt == 1 else f"{prompt}{CLIP_RETRY_HINT}")
+        if not content_touches_edge(raw_bytes):
+            return standardize_image_bytes(raw_bytes)
+        logger.warning("Generated image is cut off at the edge (attempt %d/%d)", attempt, MAX_CLIP_ATTEMPTS)
+    raise ClippedImageError(f"Image still cut off at the edge after {MAX_CLIP_ATTEMPTS} attempts.")
 
 
 def standardize_image_bytes(img_bytes: bytes, target_width: int = 1600, target_height: int = 900, inner_margin: float = 0.90) -> bytes:
@@ -12,7 +65,7 @@ def standardize_image_bytes(img_bytes: bytes, target_width: int = 1600, target_h
     """
     try:
         with Image.open(io.BytesIO(img_bytes)) as img:
-            img = img.convert("RGB")
+            img = flatten_near_white(img)
             max_w = int(target_width * inner_margin)
             max_h = int(target_height * inner_margin)
             scale = min(max_w / img.width, max_h / img.height)
@@ -53,6 +106,9 @@ class GeminiImageGeneratorService(ImageGeneratorService):
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY", "")
 
     async def generate_image_bytes(self, prompt: str) -> bytes:
+        return await generate_unclipped(self._generate_raw, prompt)
+
+    async def _generate_raw(self, prompt: str) -> bytes:
         from google import genai
         from google.genai import types
 
@@ -95,7 +151,7 @@ class GeminiImageGeneratorService(ImageGeneratorService):
         for part in parts:
             inline = getattr(part, "inline_data", None)
             if inline and getattr(inline, "data", None):
-                return standardize_image_bytes(inline.data)
+                return inline.data
 
         raise RuntimeError("No inline image bytes found in response.")
 
@@ -108,6 +164,9 @@ class OpenAIImageGeneratorService(ImageGeneratorService):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
 
     async def generate_image_bytes(self, prompt: str) -> bytes:
+        return await generate_unclipped(self._generate_raw, prompt)
+
+    async def _generate_raw(self, prompt: str) -> bytes:
         from openai import AsyncOpenAI
         from app.modules.research.config import OPENAI_IMAGE_MODEL
 
@@ -153,13 +212,12 @@ class OpenAIImageGeneratorService(ImageGeneratorService):
             async with httpx.AsyncClient() as http_client:
                 image_response = await http_client.get(image_url)
                 image_response.raise_for_status()
-                return standardize_image_bytes(image_response.content)
+                return image_response.content
 
         # Handle base64 output (standard for gpt-image models)
         b64_json = getattr(response.data[0], "b64_json", None)
         if b64_json:
             import base64
-            raw_bytes = base64.b64decode(b64_json)
-            return standardize_image_bytes(raw_bytes)
+            return base64.b64decode(b64_json)
 
         raise RuntimeError("No image URL or base64 data returned from OpenAI.")

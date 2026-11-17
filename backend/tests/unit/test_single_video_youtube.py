@@ -92,7 +92,7 @@ async def test_pdf_service_single_video_context(tmp_path):
 
     # Asserts that single video badge and creator metadata are rendered
     assert "Technical Reference &amp; Lecture Notes" in rendered_cover or "Technical Reference & Lecture Notes" in rendered_cover
-    assert "Standalone Video Masterclass" in rendered_cover
+    assert "Standalone Video Masterclass" not in rendered_cover
     assert "codestorywithMIK" in rendered_cover
     # Assert that multi-video playlist scope is omitted for single video
     assert "1 of 1 Lectures Synthesized" not in rendered_cover

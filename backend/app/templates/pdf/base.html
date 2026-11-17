@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ playlist.title }} — Playlist Scholar Technical Reference</title>
+    <title>{{ playlist.title }} — tokens.to.systems</title>
     <style>
         {{ css_styles | safe }}
     </style>
@@ -39,6 +39,7 @@
     {% endif %}
 </head>
 <body>
+    {% include "watermark.html" %}
 
     <!-- Cover Page -->
     {% include "cover.html" %}
@@ -46,10 +47,12 @@
     <!-- Table of Contents -->
     {% include "toc.html" %}
 
-    <!-- Chapters in Original Playlist Sequence -->
+    <!-- Chapters in Original Playlist Sequence (Unavailable videos omitted from page flow per policy) -->
     {% for item in chapters %}
-        {% set loop_index = loop.index %}
-        {% include "chapter.html" %}
+        {% if item.is_available and item.has_notes %}
+            {% set loop_index = item.chapter_idx %}
+            {% include "chapter.html" %}
+        {% endif %}
     {% endfor %}
 
     <!-- Consolidated Capstone Revision -->
